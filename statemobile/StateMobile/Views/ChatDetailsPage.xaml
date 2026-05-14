@@ -6,7 +6,7 @@
              xmlns:selectors="clr-namespace:StateMobile.Selectors"
              xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
              x:Class="StateMobile.Views.ChatDetailsPage"
-             Title="{Binding SelectedRoom.RoomName}"
+             NavigationPage.HasNavigationBar="False"
              BackgroundColor="{StaticResource Secondary}"
              android:Application.WindowSoftInputModeAdjust="Resize">
 
@@ -14,28 +14,60 @@
         <selectors:ChatMessageTemplateSelector x:Key="MessageSelector" />
     </ContentPage.Resources>
 
-    <!-- Gamit ang Grid na may RowDefinitions="*, Auto", 
-         ang unang row (*) ay liliit kapag lumabas ang keyboard, 
-         at ang pangalawang row (Auto) ay mananatili sa itaas ng keyboard. -->
-    <Grid RowDefinitions="*, Auto" RowSpacing="0">
+    <!-- 3-Row Grid: Header (Fixed), Messages (Flexible), Input (Fixed) -->
+    <Grid RowDefinitions="Auto, *, Auto" RowSpacing="0">
         
-        <!-- Chat Messages List -->
+        <!-- Custom Professional Header (Para hindi mawala kahit may keyboard) -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="Auto, *, Auto" 
+              Padding="10,15" 
+              BackgroundColor="{StaticResource Primary}">
+            
+            <ImageButton Source="close_icon.png" 
+                         HeightRequest="25" 
+                         WidthRequest="25"
+                         Command="{Binding BackCommand}"
+                         VerticalOptions="Center" />
+            
+            <VerticalStackLayout Grid.Column="1" Margin="15,0" VerticalOptions="Center">
+                <Label Text="{Binding SelectedRoom.RoomName}" 
+                       TextColor="White" 
+                       FontSize="18" 
+                       FontAttributes="Bold" />
+                <Label Text="Online" 
+                       TextColor="#A0FFFFFF" 
+                       FontSize="12" />
+            </VerticalStackLayout>
+
+            <Image Source="project_profile.png" 
+                   Grid.Column="2"
+                   HeightRequest="40" 
+                   WidthRequest="40"
+                   Aspect="AspectFill"
+                   VerticalOptions="Center">
+                <Image.Clip>
+                    <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20" />
+                </Image.Clip>
+            </Image>
+        </Grid>
+        
+        <!-- Chat Messages List (Ito lang ang liliit/mag-sh-shrink) -->
         <CollectionView x:Name="MessagesList"
-                        Grid.Row="0"
+                        Grid.Row="1"
                         ItemsSource="{Binding Messages}"
                         ItemTemplate="{StaticResource MessageSelector}"
                         ItemsUpdatingScrollMode="KeepLastItemInView"
                         VerticalScrollBarVisibility="Never"
                         SelectionMode="None"
-                        Margin="10,0">
+                        Padding="10">
             <CollectionView.ItemsLayout>
-                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
             </CollectionView.ItemsLayout>
         </CollectionView>
 
-        <!-- Mobile Input Area -->
-        <Frame Grid.Row="1" 
-               Padding="10,5" 
+        <!-- Mobile Input Area (Laging nasa itaas ng keyboard) -->
+        <Frame Grid.Row="2" 
+               Padding="10,8" 
                Margin="0"
                CornerRadius="0"
                HasShadow="False"
@@ -47,23 +79,24 @@
                         Placeholder="Type a message..."
                         Text="{Binding NewMessageText}"
                         AutoSize="TextChanges"
-                        MaximumHeightRequest="120"
+                        MaximumHeightRequest="100"
                         VerticalOptions="Center"
                         Keyboard="Chat"
-                        BackgroundColor="Transparent" />
+                        BackgroundColor="Transparent"
+                        FontSize="15" />
 
                 <ImageButton Grid.Column="1"
                              Source="send_arrow.png"
                              Command="{Binding SendMessageCommand}"
-                             HeightRequest="35"
-                             WidthRequest="35"
+                             HeightRequest="32"
+                             WidthRequest="32"
                              VerticalOptions="End"
                              Margin="0,0,5,5">
                     <ImageButton.Triggers>
                         <DataTrigger TargetType="ImageButton"
                                      Binding="{Binding NewMessageText.Length}"
                                      Value="0">
-                            <Setter Property="Opacity" Value="0.5" />
+                            <Setter Property="Opacity" Value="0.4" />
                             <Setter Property="IsEnabled" Value="False" />
                         </DataTrigger>
                     </ImageButton.Triggers>
