@@ -1,107 +1,27 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2001/xaml"
-             xmlns:vm="clr-namespace:StateMobile.ViewModel"
-             xmlns:models="clr-namespace:StateMobile.Models"
-             xmlns:selectors="clr-namespace:StateMobile.Selectors"
-             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
-             x:Class="StateMobile.Views.ChatDetailsPage"
-             NavigationPage.HasNavigationBar="False"
-             BackgroundColor="{StaticResource Secondary}"
-             android:Application.WindowSoftInputModeAdjust="Resize">
-
-    <ContentPage.Resources>
-        <selectors:ChatMessageTemplateSelector x:Key="MessageSelector" />
-    </ContentPage.Resources>
-
-    <!-- 3-Row Grid: Header (Fixed), Messages (Flexible), Input (Fixed) -->
-    <Grid RowDefinitions="Auto, *, Auto" RowSpacing="0">
-        
-        <!-- Custom Professional Header (Para hindi mawala kahit may keyboard) -->
-        <Grid Grid.Row="0" 
-              ColumnDefinitions="Auto, *, Auto" 
-              Padding="10,15" 
-              BackgroundColor="{StaticResource Primary}">
-            
-            <ImageButton Source="close_icon.png" 
-                         HeightRequest="25" 
-                         WidthRequest="25"
-                         Command="{Binding BackCommand}"
-                         VerticalOptions="Center" />
-            
-            <VerticalStackLayout Grid.Column="1" Margin="15,0" VerticalOptions="Center">
-                <Label Text="{Binding SelectedRoom.RoomName}" 
-                       TextColor="White" 
-                       FontSize="18" 
-                       FontAttributes="Bold" />
-                <Label Text="Online" 
-                       TextColor="#A0FFFFFF" 
-                       FontSize="12" />
-            </VerticalStackLayout>
-
-            <Image Source="project_profile.png" 
-                   Grid.Column="2"
-                   HeightRequest="40" 
-                   WidthRequest="40"
-                   Aspect="AspectFill"
-                   VerticalOptions="Center">
-                <Image.Clip>
-                    <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20" />
-                </Image.Clip>
-            </Image>
-        </Grid>
-        
-        <!-- Chat Messages List (Ito lang ang liliit/mag-sh-shrink) -->
-        <CollectionView x:Name="MessagesList"
-                        Grid.Row="1"
-                        ItemsSource="{Binding Messages}"
-                        ItemTemplate="{StaticResource MessageSelector}"
-                        ItemsUpdatingScrollMode="KeepLastItemInView"
-                        VerticalScrollBarVisibility="Never"
-                        SelectionMode="None"
-                        Padding="10">
-            <CollectionView.ItemsLayout>
-                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
-            </CollectionView.ItemsLayout>
-        </CollectionView>
-
-        <!-- Mobile Input Area (Laging nasa itaas ng keyboard) -->
-        <Frame Grid.Row="2" 
-               Padding="10,8" 
-               Margin="0"
-               CornerRadius="0"
-               HasShadow="False"
-               BorderColor="{StaticResource Gray200}"
-               BackgroundColor="White">
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10" VerticalOptions="Center">
+<!-- ... existing code ... -->
+        <Frame Grid.Row="2" Padding="10,8" BackgroundColor="White">
+            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
                 
-                <Editor x:Name="MessageEntry"
+                <!-- Attachment & Scan Buttons -->
+                <HorizontalStackLayout Spacing="5">
+                    <ImageButton Source="plus_icon.png" 
+                                 Command="{Binding PickAttachmentCommand}"
+                                 HeightRequest="25" WidthRequest="25" />
+                    <ImageButton Source="mic_vm.png" 
+                                 Command="{Binding ScanDocumentCommand}"
+                                 HeightRequest="25" WidthRequest="25" />
+                </HorizontalStackLayout>
+
+                <Editor Grid.Column="1"
                         Placeholder="Type a message..."
                         Text="{Binding NewMessageText}"
                         AutoSize="TextChanges"
-                        MaximumHeightRequest="100"
-                        VerticalOptions="Center"
-                        Keyboard="Chat"
-                        BackgroundColor="Transparent"
-                        FontSize="15" />
+                        MaximumHeightRequest="100" />
 
-                <ImageButton Grid.Column="1"
+                <ImageButton Grid.Column="2"
                              Source="send_arrow.png"
                              Command="{Binding SendMessageCommand}"
-                             HeightRequest="32"
-                             WidthRequest="32"
-                             VerticalOptions="End"
-                             Margin="0,0,5,5">
-                    <ImageButton.Triggers>
-                        <DataTrigger TargetType="ImageButton"
-                                     Binding="{Binding NewMessageText.Length}"
-                                     Value="0">
-                            <Setter Property="Opacity" Value="0.4" />
-                            <Setter Property="IsEnabled" Value="False" />
-                        </DataTrigger>
-                    </ImageButton.Triggers>
-                </ImageButton>
+                             HeightRequest="32" WidthRequest="32" />
             </Grid>
         </Frame>
-    </Grid>
-</ContentPage>
+<!-- ... existing code ... -->

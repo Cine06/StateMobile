@@ -9,82 +9,75 @@ namespace StateMobile.ViewModel
     public partial class ChatViewModel : BasedViewModel
     {
         private readonly IChatService _chatService;
+        private readonly IDocumentScannerService _scannerService;
 
-        [ObservableProperty]
-        private ObservableCollection<ChatMessageModel> messages = new();
+        [ObservableProperty] private ObservableCollection<ChatMessageModel> messages = new();
+        [ObservableProperty] private string newMessageText;
+        [ObservableProperty] private ChatRoomModel selectedRoom;
 
-        [ObservableProperty]
-        private ChatRoomModel selectedRoom;
-
-        [ObservableProperty]
-        private string newMessageText;
-
-        [ObservableProperty]
-        private bool isBusy;
-
-        public ChatViewModel(IChatService chatService)
+        public ChatViewModel(IChatService chatService, IDocumentScannerService scannerService)
         {
             _chatService = chatService;
-            // Makinig sa real-time messages
-            ((SignalRChatService)_chatService).MessageReceived += OnMessageReceived;
-        }
-
-        public async Task InitializeAsync(ChatRoomModel room)
-        {
-            SelectedRoom = room;
-            IsBusy = true;
-
-            try
+            _scannerService = scannerService;
+            
+            if (_chatService is SignalRChatService signalR)
             {
-                await _chatService.ConnectAsync();
-                var history = await _chatService.GetMessagesAsync(room.RoomId);
-                
-                Messages.Clear();
-                foreach (var msg in history)
-                    Messages.Add(msg);
-
-                await _chatService.MarkAsReadAsync(room.RoomId);
-            }
-            finally
-            {
-                IsBusy = false;
+                signalR.MessageReceived += (msg) => MainThread.BeginInvokeOnMainThread(() => Messages.Add(msg));
+                signalR.MessageDeleted += (id, everyone) => HandleDeletion(id, everyone);
             }
         }
 
         [RelayCommand]
-        private async Task SendMessage()
+        private async Task PickAttachment()
         {
-            if (string.IsNullOrWhiteSpace(NewMessageText)) return;
+            var result = await FilePicker.Default.PickAsync(new PickOptions {
+                PickerTitle = "Select Attachment",
+                FileTypes = FilePickerFileType.Images
+            });
 
-            var content = NewMessageText;
-            NewMessageText = string.Empty; // Clear agad para sa magandang UX
-
-            var success = await _chatService.SendMessageAsync(SelectedRoom.RoomId, content);
-            if (!success)
+            if (result != null)
             {
-                // Ibalik ang text kung nag-fail
-                NewMessageText = content;
-                await App.Current.MainPage.DisplayAlert("Error", "Failed to send message.", "OK");
+                await ((SignalRChatService)_chatService).SendAttachmentAsync(SelectedRoom.RoomId, result.FullPath, "image");
             }
         }
 
-        private void OnMessageReceived(ChatMessageModel message)
+        [RelayCommand]
+        private async Task ScanDocument()
         {
-            // Siguraduhin na para sa kasalukuyang room ang message
-            if (message.RoomId == SelectedRoom?.RoomId)
+            var result = await _scannerService.ScanDocumentAsync();
+            if (result != null && result.Any())
             {
-                MainThread.BeginInvokeOnMainThread(() =>
+                // I-upload ang unang scanned page bilang PDF/Image
+                await ((SignalRChatService)_chatService).SendAttachmentAsync(SelectedRoom.RoomId, result.First().ImagePath, "pdf");
+            }
+        }
+
+        [RelayCommand]
+        private async Task DeleteMessage(ChatMessageModel message)
+        {
+            string action = await App.Current.MainPage.DisplayActionSheet("Delete Message?", "Cancel", null, "Delete for Me", "Delete for Everyone");
+            
+            if (action == "Delete for Me")
+                await ((SignalRChatService)_chatService).DeleteMessageAsync(message.MessageID, false);
+            else if (action == "Delete for Everyone")
+                await ((SignalRChatService)_chatService).DeleteMessageAsync(message.MessageID, true);
+        }
+
+        private void HandleDeletion(long id, bool everyone)
+        {
+            MainThread.BeginInvokeOnMainThread(() => {
+                var msg = Messages.FirstOrDefault(m => m.MessageID == id);
+                if (msg != null)
                 {
-                    Messages.Add(message);
-                });
-            }
-        }
-
-        [RelayCommand]
-        private async Task Back()
-        {
-            await _chatService.DisconnectAsync();
-            await Shell.Current.GoToAsync("..");
+                    if (everyone) {
+                        msg.MessageText = "This message was deleted.";
+                        msg.IsDeletedForEveryone = true;
+                        msg.AttachmentPath = null;
+                    } else {
+                        Messages.Remove(msg);
+                    }
+                }
+            });
         }
     }
 }
