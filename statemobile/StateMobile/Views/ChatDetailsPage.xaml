@@ -1,15 +1,29 @@
-<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:views="clr-namespace:StateMobile.Views"
-             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
+             xmlns:vm="clr-namespace:StateMobile.ViewModel"
              x:Class="StateMobile.Views.ChatDetailsPage"
-             ControlTemplate="{StaticResource MainPageTemplate}"
-             android:Application.WindowSoftInputModeAdjust="Resize"
-             NavigationPage.HasNavigationBar="False"
-             BackgroundColor="#F5F6F7">
+             Title="{Binding CurrentRoom.RoomName}">
 
-    <views:ChatDetailsView x:Name="detailsView" 
-                           BackTapped="OnDetailsBackTapped"
-                           SettingsTapped="OnSettingsTapped" />
+    <Grid RowDefinitions="*, Auto">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Messages}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout Padding="10">
+                        <Frame CornerRadius="10" BackgroundColor="{Binding IsMe, Converter={StaticResource SelectionColorConverter}}">
+                            <Label Text="{Binding MessageText}" />
+                        </Frame>
+                        <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}" FontSize="Caption" HorizontalOptions="End" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
-</views:BasePage>
+        <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto, Auto" Padding="10" BackgroundColor="White">
+            <Button Grid.Column="0" Text="+" Command="{Binding AttachFileCommand}" />
+            <Entry Grid.Column="1" Text="{Binding MessageText}" Placeholder="Type a message..." />
+            <Button Grid.Column="2" Text="Scan" Command="{Binding ScanDocumentCommand}" />
+            <Button Grid.Column="3" Text="Send" Command="{Binding SendMessageCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>
