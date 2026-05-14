@@ -4,24 +4,29 @@
              xmlns:vm="clr-namespace:StateMobile.ViewModel"
              xmlns:models="clr-namespace:StateMobile.Models"
              xmlns:selectors="clr-namespace:StateMobile.Selectors"
+             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
              x:Class="StateMobile.Views.ChatDetailsPage"
              Title="{Binding SelectedRoom.RoomName}"
-             BackgroundColor="{StaticResource Secondary}">
+             BackgroundColor="{StaticResource Secondary}"
+             android:Application.WindowSoftInputModeAdjust="Resize">
 
     <ContentPage.Resources>
         <selectors:ChatMessageTemplateSelector x:Key="MessageSelector" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="*, Auto">
+    <!-- Gamit ang Grid na may RowDefinitions="*, Auto", 
+         ang unang row (*) ay liliit kapag lumabas ang keyboard, 
+         at ang pangalawang row (Auto) ay mananatili sa itaas ng keyboard. -->
+    <Grid RowDefinitions="*, Auto" RowSpacing="0">
         
         <!-- Chat Messages List -->
-        <!-- ItemsUpdatingScrollMode="KeepLastItemInView" is critical for mobile chat -->
         <CollectionView x:Name="MessagesList"
                         Grid.Row="0"
                         ItemsSource="{Binding Messages}"
                         ItemTemplate="{StaticResource MessageSelector}"
                         ItemsUpdatingScrollMode="KeepLastItemInView"
                         VerticalScrollBarVisibility="Never"
+                        SelectionMode="None"
                         Margin="10,0">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
@@ -36,7 +41,7 @@
                HasShadow="False"
                BorderColor="{StaticResource Gray200}"
                BackgroundColor="White">
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10" VerticalOptions="Center">
                 
                 <Editor x:Name="MessageEntry"
                         Placeholder="Type a message..."
