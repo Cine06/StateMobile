@@ -1,126 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="StateMobile.Views.CameraScanPage"
-             NavigationPage.HasNavigationBar="False"
-             BackgroundColor="#0B0F12">
+             Title="Scan Document"
+             BackgroundColor="Black">
 
-    <Grid RowDefinitions="Auto, *, Auto, Auto">
-        <Border Grid.Row="0"
-                BackgroundColor="{StaticResource Primary}"
-                StrokeThickness="0"
-                Padding="16,14">
-            <Grid ColumnDefinitions="Auto, *, Auto">
-                <Button Text="Cancel"
-                        BackgroundColor="Transparent"
-                        TextColor="White"
-                        HorizontalOptions="Start"
-                        Clicked="OnCancelClicked" />
-                <Label Grid.Column="1"
-                       Text="Scanner"
-                       TextColor="White"
-                       FontAttributes="Bold"
-                       FontSize="18"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center" />
-                <Label Grid.Column="2"
-                       x:Name="lblMode"
-                       Text="Capture: manual"
-                       TextColor="#E6FFFB"
-                       FontSize="12"
-                       VerticalOptions="Center" />
-            </Grid>
-        </Border>
+    <Grid RowDefinitions="*, Auto, Auto">
+        <!-- Camera Preview Area -->
+        <CameraUpdateView x:Name="cameraView" Grid.Row="0" />
 
-        <Grid Grid.Row="1" Padding="12,14">
-            <Border Stroke="#4DD6BF"
-                    StrokeThickness="3"
-                    BackgroundColor="#1A232A"
-                    Padding="0">
-                <Grid>
-                    <Grid x:Name="cameraHost" />
-                    <Label x:Name="lblPlaceholder"
-                           Text="Tap capture to scan your first page"
-                           TextColor="#D1D5DB"
-                           FontSize="15"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center" />
-                </Grid>
-            </Border>
-        </Grid>
+        <!-- Captured Pages Thumbnails -->
+        <ScrollView Grid.Row="1" Orientation="Horizontal" HeightRequest="100" BackgroundColor="#33000000">
+            <HorizontalStackLayout x:Name="ThumbnailList" Spacing="10" Padding="10" />
+        </ScrollView>
 
-        <Border Grid.Row="2" BackgroundColor="#101518" StrokeThickness="0" Padding="10,8">
-            <CollectionView x:Name="thumbnailCollection"
-                            HeightRequest="94"
-                            ItemsLayout="HorizontalList">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="6,0"
-                                Stroke="#2E3B42"
-                                StrokeThickness="1"
-                                BackgroundColor="#162027"
-                                Padding="2"
-                                WidthRequest="62"
-                                HeightRequest="86">
-                            <Image Source="{Binding .}" Aspect="AspectFill" />
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Border>
+        <!-- Controls -->
+        <Grid Grid.Row="2" ColumnDefinitions="*, *, *" Padding="20" BackgroundColor="#1A1A1A">
+            <Button Text="Cancel" Clicked="OnCancelClicked" Grid.Column="0" BackgroundColor="Transparent" TextColor="White"/>
+            
+            <Ellipse WidthRequest="70" HeightRequest="70" Fill="White" Stroke="Gray" StrokeThickness="4" Grid.Column="1" HorizontalOptions="Center">
+                <Ellipse.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCaptureClicked" />
+                </Ellipse.GestureRecognizers>
+            </Ellipse>
 
-        <Border Grid.Row="3" BackgroundColor="#06090C" Padding="14,12" StrokeThickness="0">
-            <Grid ColumnDefinitions="Auto, Auto, *, Auto" VerticalOptions="Center" ColumnSpacing="10">
-                <Button Grid.Column="0"
-                        Text="Retake"
-                        BackgroundColor="Transparent"
-                        TextColor="#A8F0E2"
-                        Clicked="OnRetakeClicked" />
-
-            <Button Grid.Column="1"
-                x:Name="btnSign"
-                Text="Sign"
-                BackgroundColor="Transparent"
-                TextColor="#A8F0E2"
-                IsEnabled="False"
-                Clicked="OnSignClicked" />
-
-            <Grid Grid.Column="2" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Border BackgroundColor="#498789"
-                            Stroke="#7DEBD7"
-                            StrokeThickness="3"
-                            WidthRequest="84"
-                            HeightRequest="84"
-                            StrokeShape="RoundRectangle 42">
-                        <Button x:Name="btnCapture"
-                                Text=""
-                                BackgroundColor="Transparent"
-                                BorderWidth="0"
-                                Clicked="OnCaptureClicked" />
-                    </Border>
-                    <Border BackgroundColor="White"
-                            StrokeThickness="0"
-                            WidthRequest="64"
-                            HeightRequest="64"
-                            StrokeShape="RoundRectangle 32"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
-                </Grid>
-
-                <Button Grid.Column="3"
-                        x:Name="btnDone"
-                        Text="Done (0)"
-                        BackgroundColor="#1D2A31"
-                        TextColor="White"
-                        IsEnabled="False"
-                        Clicked="OnDoneClicked" />
-            </Grid>
-        </Border>
-
-        <Grid x:Name="loadingOverlay" Grid.RowSpan="4" BackgroundColor="#8A000000" IsVisible="False">
-            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
-                <ActivityIndicator IsRunning="True" Color="White"/>
-                <Label x:Name="lblLoadingText" Text="Processing..." TextColor="White"/>
-            </VerticalStackLayout>
+            <Button x:Name="DoneButton" Text="Done (0)" Clicked="OnDoneClicked" Grid.Column="2" 
+                    BackgroundColor="#498789" TextColor="White" CornerRadius="20" IsEnabled="False"/>
         </Grid>
     </Grid>
 </ContentPage>

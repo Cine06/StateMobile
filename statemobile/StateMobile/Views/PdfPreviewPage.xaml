@@ -2,50 +2,49 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="StateMobile.Views.PdfPreviewPage"
-             Title="Document Preview"
-             BackgroundColor="#F0F0F0">
+             Title="Review & Sign"
+             BackgroundColor="#E5E5E5">
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="20">
-            <BindableLayout.ItemsSource="{Binding Document.Pages}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate>
-                        <VerticalStackLayout Spacing="10">
-                            <Frame Padding="0" HasShadow="True" BackgroundColor="White" HeightRequest="600" WidthRequest="424">
-                                <Grid>
-                                    <Image Source="{Binding ImagePath}" Aspect="AspectFit" />
-                                    
-                                    <!-- Signature Overlay with Transparency -->
-                                    <Image Source="{Binding Signature.SignatureData, Converter={StaticResource ByteArrayToImageSourceConverter}}"
-                                           IsVisible="{Binding Signature, Converter={StaticResource IsNotNullConverter}}"
-                                           TranslationX="{Binding Signature.X}"
-                                           TranslationY="{Binding Signature.Y}"
-                                           WidthRequest="{Binding Signature.Width}"
-                                           HeightRequest="{Binding Signature.Height}"
-                                           HorizontalOptions="Start" 
-                                           VerticalOptions="Start"
-                                           BackgroundColor="Transparent" />
-                                </Grid>
-                            </Frame>
-                            
-                            <Button Text="Add Signature to this Page" 
-                                    Clicked="OnAddSignatureClicked"
-                                    BackgroundColor="#498789"
-                                    TextColor="White"
-                                    HorizontalOptions="Center"
-                                    CornerRadius="20" />
-                        </VerticalStackLayout>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </BindableLayout>
-            
-            <Button Text="Generate Final PDF" 
-                    Command="{Binding SavePdfCommand}" 
-                    BackgroundColor="#054b45" 
-                    TextColor="White" 
-                    Margin="0,20,0,40"
-                    HeightRequest="50"
-                    CornerRadius="25"/>
-        </VerticalStackLayout>
-    </ScrollView>
+    <Grid RowDefinitions="*, Auto">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Document.Pages}" ItemsLayout="VerticalList">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout Padding="20" Spacing="10">
+                        <Label Text="{Binding PageNumber, StringFormat='Page {0}'}" HorizontalOptions="Center" FontAttributes="Bold"/>
+                        
+                        <Frame Padding="0" HasShadow="True" WidthRequest="350" HeightRequest="495" BackgroundColor="White" HorizontalOptions="Center">
+                            <Grid>
+                                <Image Source="{Binding ImagePath}" Aspect="AspectFit" />
+                                
+                                <!-- Signature Overlay -->
+                                <Image Source="{Binding Signature.SignatureData, Converter={StaticResource ByteArrayToImageSourceConverter}}"
+                                       IsVisible="{Binding Signature, Converter={StaticResource IsNotNullConverter}}"
+                                       TranslationX="{Binding Signature.X}"
+                                       TranslationY="{Binding Signature.Y}"
+                                       WidthRequest="120"
+                                       HeightRequest="60"
+                                       HorizontalOptions="Start" 
+                                       VerticalOptions="Start" />
+                            </Grid>
+                        </Frame>
+
+                        <Button Text="Sign this Page" 
+                                Clicked="OnAddSignatureClicked"
+                                CommandParameter="{Binding .}"
+                                BackgroundColor="#498789"
+                                CornerRadius="20"
+                                WidthRequest="150"
+                                HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Grid.Row="1" Text="Generate PDF" 
+                Clicked="OnGeneratePdfClicked"
+                BackgroundColor="#054b45" 
+                TextColor="White" 
+                HeightRequest="60"
+                CornerRadius="0"/>
+    </Grid>
 </ContentPage>
