@@ -1,74 +1,58 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StateMobile.Models;
-using StateMobile.Services;
 using System.Collections.ObjectModel;
 
 namespace StateMobile.ViewModel
 {
     public partial class ChatViewModel : BasedViewModel
     {
-        private readonly IChatService _chatService;
-        private readonly IDocumentScannerService _scannerService;
-        private readonly string _currentUserId;
-
-        [ObservableProperty]
-        private string _messageText;
-
-        [ObservableProperty]
-        private ChatRoomModel _currentRoom;
-
-        public ObservableCollection<ChatMessageModel> Messages { get; } = new();
-
-        public ChatViewModel(IChatService chatService, IDocumentScannerService scannerService)
-        {
-            _chatService = chatService;
-            _scannerService = scannerService;
-            _currentUserId = Preferences.Get("UserId", "");
-
-            _chatService.OnMessageReceived += (msg) => MainThread.BeginInvokeOnMainThread(() => Messages.Add(msg));
-            _chatService.OnMessageDeleted += (id, everyone) => MainThread.BeginInvokeOnMainThread(() => {
-                var msg = Messages.FirstOrDefault(m => m.MessageID == id);
-                if (msg != null) Messages.Remove(msg);
-            });
-        }
+        // ... existing properties ...
 
         [RelayCommand]
-        private async Task SendMessage()
+        private async Task SendMessage(ChatMessageModel message = null)
         {
-            if (string.IsNullOrWhiteSpace(MessageText)) return;
-
-            var message = new ChatMessageModel
-            {
-                RoomID = CurrentRoom.RoomID,
-                SenderID = _currentUserId,
-                MessageText = MessageText
+            var msgToSend = message ?? new ChatMessageModel 
+            { 
+                RoomID = CurrentRoom.RoomID, 
+                SenderID = _currentUserId, 
+                MessageText = MessageText,
+                IsFailed = false 
             };
 
-            // Call API to save and broadcast
-            // (Implementation would use a HttpClient service)
-            MessageText = string.Empty;
-        }
+            if (message == null) Messages.Add(msgToSend);
+            msgToSend.IsSending = true;
+            msgToSend.IsFailed = false;
 
-        [RelayCommand]
-        private async Task ScanDocument()
-        {
-            var result = await _scannerService.ScanDocumentAsync();
-            if (result != null)
+            try 
             {
-                // Handle scanned document (e.g., upload and send as attachment)
-                await Shell.Current.DisplayAlert("Success", "Document scanned and ready to send.", "OK");
+                // Simulate API Call
+                // var result = await _apiService.PostAsync("api/chat/send", msgToSend);
+                msgToSend.IsSending = false;
+            }
+            catch (Exception)
+            {
+                msgToSend.IsSending = false;
+                msgToSend.IsFailed = true;
+                await Shell.Current.DisplayAlert("Error", "Failed to send message. Tap to retry.", "OK");
             }
         }
 
         [RelayCommand]
-        private async Task AttachFile()
+        private async Task RetryMessage(ChatMessageModel message)
         {
-            var result = await FilePicker.PickAsync();
-            if (result != null)
-            {
-                // Handle file attachment
-            }
+            await SendMessage(message);
+        }
+
+        [RelayCommand]
+        private async Task DeleteMessage(ChatMessageModel message)
+        {
+            var action = await Shell.Current.DisplayActionSheet("Delete Message", "Cancel", null, "Delete for Me", "Delete for Everyone");
+            if (action == "Cancel") return;
+
+            bool forEveryone = action == "Delete for Everyone";
+            // Call API to delete
+            // await _apiService.PostAsync("api/chat/delete", new { MessageID = message.MessageID, ForEveryone = forEveryone });
         }
     }
 }
