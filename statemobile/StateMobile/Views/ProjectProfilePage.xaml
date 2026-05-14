@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:StateMobile.Views"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             xmlns:converters="clr-namespace:StateMobile.Converters"
+             x:Class="StateMobile.Views.ProjectProfilePage"
+             ControlTemplate="{StaticResource MainPageTemplate}"
+             NavigationPage.HasNavigationBar="False"
+             Title="Project Profile"
+             BackgroundColor="{AppThemeBinding Light=#F5F6F7, Dark=#0F0F0F}">
+    
+    <views:BasePage.Resources>
+        <!-- Converters -->
+        <converters:ProjectProfileImageConverter x:Key="ImageConverter" />
+        <converters:EngineerImageConverter x:Key="EngineerConverter" />
+
+        <DataTemplate x:Key="GridTemplate" x:DataType="models:ProjectModel">
+            <Border StrokeShape="RoundRectangle 4" Margin="0,0,0,25" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}" StrokeThickness="1" Stroke="#E0E0E0">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,2" Radius="4" Opacity="0.05" />
+                </Border.Shadow>
+                
+                <VerticalStackLayout Spacing="0">
+                    <!-- Project Image & Status Badge -->
+                    <Grid HeightRequest="160">
+                        <Image Source="{Binding ., Converter={StaticResource ImageConverter}}" 
+                               Aspect="AspectFill" 
+                               BackgroundColor="#F0F0F0" />
+                        
+                        <!-- Status Badge Overlay (Top-Right) -->
+                        <Border HorizontalOptions="End" VerticalOptions="Start" Padding="12,6" Margin="10" 
+                                BackgroundColor="#498789" StrokeShape="RoundRectangle 4" StrokeThickness="0">
+                            <Label Text="{Binding StatusText}" TextColor="White" FontSize="11" FontAttributes="Bold" TextTransform="Uppercase" />
+                        </Border>
+
+                        <!-- Offline Pending Badge (Top-Left) -->
+                        <Border HorizontalOptions="Start" VerticalOptions="Start" Padding="8,4" Margin="10" 
+                                BackgroundColor="#FFC107" StrokeShape="RoundRectangle 4" StrokeThickness="0"
+                                IsVisible="{Binding HasOfflineEntries}">
+                            <Label Text="📴 OFFLINE PENDING" TextColor="Black" FontSize="9" FontAttributes="Bold" />
+                        </Border>
+                    </Grid>
+                    
+                    <VerticalStackLayout Padding="18" Spacing="4">
+                        <!-- Particulars -->
+                        <Label Text="{Binding Particulars}" FontSize="15" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#000000, Dark=White}" TextTransform="Uppercase" />
+                        
+                        <!-- Project Name -->
+                        <Label Text="{Binding ProjName}" FontSize="13" TextColor="{AppThemeBinding Light=#666666, Dark=#CCCCCC}" />
+
+                        <!-- Award Date -->
+                        <Label FontSize="12" TextColor="#498789" Margin="0,2,0,0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Award Date: " FontAttributes="Bold" TextColor="#498789" />
+                                    <Span Text="{Binding AwardDateFormatted}" TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <!-- Target Finish Date -->
+                        <Label FontSize="12" TextColor="#498789">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Target Finish Date: " FontAttributes="Bold" TextColor="#498789" />
+                                    <Span Text="{Binding TargetEndDateFormatted}" TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        
+                        <!-- OIC Engineer -->
+                        <Label FontSize="12" TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" Margin="0,2,0,0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="OIC: " FontAttributes="Bold" TextColor="#498789" />
+                                    <Span Text="{Binding AssignedEngineersOICNames}" TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <!-- Progress Section -->
+                        <Grid ColumnDefinitions="*, Auto" Margin="0,6,0,0">
+                            <Label Grid.Column="0" Text="PROGRESS" FontSize="12" FontAttributes="Bold" TextColor="#498789" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding ProgressPercentText}" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" VerticalOptions="Center" />
+                        </Grid>
+                        <ProgressBar Progress="{Binding PercentageCompletion, Converter={StaticResource PercentageToDouble}}" 
+                                     ProgressColor="#498789" 
+                                     BackgroundColor="{AppThemeBinding Light=#E8E8E8, Dark=#333333}"
+                                     HeightRequest="6" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+
+        <!-- List Template -->
+        <DataTemplate x:Key="ListTemplate" x:DataType="models:ProjectModel">
+            <Border StrokeShape="RoundRectangle 8" Margin="0,0,0,10" Padding="15,10" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}" StrokeThickness="1" Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}">
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="{Binding Particulars}" FontSize="15" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#000000, Dark=White}" />
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="{Binding CtrlNo, StringFormat='ID: {0}'}" FontSize="11" TextColor="{AppThemeBinding Light=#000000, Dark=#E0E0E0}" />
+                            <Label Text="•" TextColor="Silver" />
+                            <Label Text="{Binding StatusText}" FontSize="11" TextColor="#498789" FontAttributes="Bold" />
+                            <Label Text="📴 PENDING" FontSize="11" TextColor="#856404" FontAttributes="Bold" IsVisible="{Binding HasOfflineEntries}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                    
+                    <Label Grid.Column="1" Text="&#x25B6;" FontSize="16" TextColor="{AppThemeBinding Light=#000000, Dark=White}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        
+        <!-- Helper Converter for ProgressBar (0-100 to 0.0-1.0) -->
+        <converters:PercentageToDoubleConverter x:Key="PercentageToDouble" />
+    </views:BasePage.Resources>
+    
+    <Grid RowDefinitions="Auto, Auto, *">
+        <!-- Offline Mode Banner -->
+        <Border Grid.Row="0" 
+                x:Name="OfflineBanner"
+                IsVisible="{Binding IsOfflineMode}"
+                BackgroundColor="#FFF3CD" 
+                StrokeThickness="0"
+                Padding="12,8"
+                Margin="0">
+            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                <Label Text="&#x26A0;" FontSize="14" VerticalOptions="Center" />
+                <Label Text="Offline Mode - Showing cached data" 
+                       FontSize="12" 
+                       FontAttributes="Bold"
+                       TextColor="#856404" 
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </Border>
+        
+        <!-- Pending Sync Banner -->
+        <Border Grid.Row="0" 
+                x:Name="SyncBanner"
+                IsVisible="{Binding HasPendingSync}"
+                BackgroundColor="#D4EDDA" 
+                StrokeThickness="0"
+                Padding="12,8"
+                Margin="0">
+            <Grid ColumnDefinitions="*, Auto">
+                <HorizontalStackLayout Grid.Column="0" Spacing="8" VerticalOptions="Center">
+                    <Label Text="&#x231B;" FontSize="14" VerticalOptions="Center" TextColor="#155724" />
+                    <Label Text="{Binding PendingSyncText}" 
+                           FontSize="12" 
+                           FontAttributes="Bold"
+                           TextColor="#155724" 
+                           VerticalOptions="Center" />
+                </HorizontalStackLayout>
+                
+                <Button Grid.Column="1" 
+                        Text="Review &amp; Sync" 
+                        FontSize="11"
+                        Padding="12,4"
+                        HeightRequest="32"
+                        BackgroundColor="#28A745"
+                        TextColor="White"
+                        CornerRadius="6"
+                        Clicked="OnReviewSyncClicked" />
+            </Grid>
+        </Border>
+        <!-- Professional Header & Filters -->
+        <VerticalStackLayout Grid.Row="1" Padding="25,20" Spacing="20" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+            
+            <!-- Data Saver Toggle -->
+            <Border Stroke="#FFC107" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="12,8" BackgroundColor="#FFF8E1" IsVisible="{Binding IsMobileDataDetected}">
+                <Grid ColumnDefinitions="*, Auto">
+                    <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                        <Label Text="Data Saver" FontSize="14" FontAttributes="Bold" TextColor="#856404" />
+                        <Label Text="Mobile data detected. Turn on offline mode to save data." FontSize="12" TextColor="#856404" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding ForceOfflineMode}" OnColor="#856404" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Project Profile" FontSize="24" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#000000, Dark=White}" />
+                <Label Text="Manage and monitor project progress" FontSize="14" TextColor="{AppThemeBinding Light=#000000, Dark=#CCCCCC}" />
+            </VerticalStackLayout>
+            
+            <!-- Minimalist Horizontal Filter Chips -->
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="-10,0">
+                <HorizontalStackLayout Spacing="10" Padding="10,5">
+                    
+                    <!-- Status Chip -->
+                    <Border Stroke="#E2E8F0" StrokeThickness="1" StrokeShape="RoundRectangle 18" Padding="12,0" HeightRequest="36" BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1A}">
+                        <Picker x:Name="StatusPicker" SelectedIndexChanged="OnFilterChanged" TextColor="#498789" BackgroundColor="Transparent" FontSize="12" WidthRequest="100" Title="Status" />
+                    </Border>
+
+                    <!-- Engineer Chip -->
+                    <Border Stroke="#E2E8F0" StrokeThickness="1" StrokeShape="RoundRectangle 18" Padding="12,0" HeightRequest="36" BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1A}">
+                        <Picker x:Name="EngineerPicker" SelectedIndexChanged="OnFilterChanged" TextColor="#498789" BackgroundColor="Transparent" FontSize="12" WidthRequest="120" Title="Engineer" />
+                    </Border>
+
+                    <!-- Model Chip -->
+                    <Border Stroke="#E2E8F0" StrokeThickness="1" StrokeShape="RoundRectangle 18" Padding="12,0" HeightRequest="36" BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1A}">
+                        <Picker x:Name="ModelPicker" SelectedIndexChanged="OnFilterChanged" TextColor="#498789" BackgroundColor="Transparent" FontSize="12" WidthRequest="110" Title="Model" />
+                    </Border>
+    
+                    <!-- View Toggle Chips -->
+                    <Border Stroke="#E2E8F0" StrokeThickness="1" StrokeShape="RoundRectangle 18" Padding="4" HeightRequest="36" BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1A}">
+                        <HorizontalStackLayout Spacing="0">
+                            <Button x:Name="BtnGrid" Text="⊞" BackgroundColor="#F1F5F9" TextColor="#498789" FontSize="12" HeightRequest="28" WidthRequest="35" CornerRadius="14" Clicked="OnViewModeChanged" CommandParameter="Grid" Padding="0" />
+                            <Button x:Name="BtnList" Text="☰" BackgroundColor="Transparent" TextColor="#94A3B8" FontSize="12" HeightRequest="28" WidthRequest="35" CornerRadius="14" Clicked="OnViewModeChanged" CommandParameter="List" Padding="0" />
+                        </HorizontalStackLayout>
+                    </Border>
+    
+                    <!-- Sort Chip -->
+                    <Border Stroke="#E2E8F0" StrokeThickness="1" StrokeShape="RoundRectangle 18" Padding="12,0" HeightRequest="36" BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1A}">
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="↕" FontSize="14" TextColor="#498789" VerticalOptions="Center" />
+                            <Label Text="Sort" FontSize="12" TextColor="#498789" FontAttributes="Bold" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSortClicked" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </HorizontalStackLayout>
+            </ScrollView>
+            <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#EEEEEE, Dark=#333333}" Margin="-25,5,-25,0" />
+        </VerticalStackLayout>
+        
+        <RefreshView Grid.Row="2" x:Name="ProjectRefreshView" Refreshing="OnRefreshViewRefreshing" Margin="20,10">
+            <Grid>
+                <CollectionView x:Name="ProjectCollectionView" 
+                                ItemsSource="{Binding Projects}" 
+                                ItemTemplate="{StaticResource GridTemplate}"
+                                SelectionMode="Single" 
+                                SelectionChanged="OnProjectSelected" 
+                                EmptyView="No projects listed. Try clearing filters.">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
+                    </CollectionView.ItemsLayout>
+                </CollectionView>
+
+                <!-- Loading Skeleton -->
+                <VerticalStackLayout IsVisible="{Binding IsLoadingData}"
+                                     BackgroundColor="{AppThemeBinding Light=#F5F6F7, Dark=#0F0F0F}"
+                                     ZIndex="999">
+                    <VerticalStackLayout IsVisible="{Binding ViewMode, Converter={StaticResource InvertedBoolConverter}, ConverterParameter='List'}">
+                         <!-- Grid/Card Skeletons -->
+                        <ContentView ControlTemplate="{StaticResource ProjectCardSkeletonTemplate}" />
+                        <ContentView ControlTemplate="{StaticResource ProjectCardSkeletonTemplate}" />
+                    </VerticalStackLayout>
+                    
+                    <VerticalStackLayout IsVisible="{Binding ViewMode, ConverterParameter='List'}">
+                         <!-- List Skeletons -->
+                        <ContentView ControlTemplate="{StaticResource ProjectListSkeletonTemplate}" />
+                        <ContentView ControlTemplate="{StaticResource ProjectListSkeletonTemplate}" />
+                        <ContentView ControlTemplate="{StaticResource ProjectListSkeletonTemplate}" />
+                        <ContentView ControlTemplate="{StaticResource ProjectListSkeletonTemplate}" />
+                        <ContentView ControlTemplate="{StaticResource ProjectListSkeletonTemplate}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Grid>
+        </RefreshView>
+    </Grid>
+</views:BasePage>
+

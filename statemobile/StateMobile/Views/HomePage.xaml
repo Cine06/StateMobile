@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:StateMobile.Views"
+             x:Class="StateMobile.Views.HomePage"
+             ControlTemplate="{StaticResource MainPageTemplate}"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{AppThemeBinding Light=#F4F6F8, Dark=#0F0F1E}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,30,20,40" Spacing="30">
+            
+            <!-- Greeting Section -->
+            <VerticalStackLayout Spacing="6">
+                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                    <Label Text="👋" FontSize="20" VerticalOptions="Center"/>
+                    <Label Text="Welcome Back!" 
+                           FontSize="16" 
+                           FontAttributes="Bold" 
+                           TextColor="{AppThemeBinding Light=#498789, Dark=#A4C2C2}" 
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+                <Label Text="What do you want to do today?" 
+                       FontSize="24" 
+                       FontAttributes="Bold" 
+                       LineHeight="1.2"
+                       TextColor="{AppThemeBinding Light=#224E55, Dark=White}" />
+            </VerticalStackLayout>
+
+
+            <!-- Main Modules Section -->
+            <VerticalStackLayout Spacing="16">
+                <Label Text="MAIN MODULES" 
+                       FontSize="13" 
+                       FontAttributes="Bold" 
+                       CharacterSpacing="1"
+                       TextColor="{AppThemeBinding Light=#498789, Dark=#A4C2C2}"/>
+
+                <!-- Project Profile Card -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2A2A40}"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#171729}"
+                        Padding="16">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16"/>
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Brush="{AppThemeBinding Light=#0A000000, Dark=Transparent}" Offset="0,4" Radius="12" Opacity="1" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProjectProfileClicked" />
+                    </Border.GestureRecognizers>
+                    
+                    <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="16" VerticalOptions="Center">
+                        
+                        <!-- Icon Background Box -->
+                        <Border Grid.Column="0"
+                                StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=#EBF3F4, Dark=#183236}"
+                                WidthRequest="64"
+                                HeightRequest="64"
+                                VerticalOptions="Center">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12"/>
+                            </Border.StrokeShape>
+                            <Image Source="project_profile.png" 
+                                   HeightRequest="36" 
+                                   WidthRequest="36" 
+                                   VerticalOptions="Center" 
+                                   HorizontalOptions="Center"/>
+                        </Border>
+                        
+                        <!-- Text Info -->
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
+                            <Label Text="Project Profile" 
+                                   FontSize="17" 
+                                   FontAttributes="Bold" 
+                                   TextColor="{AppThemeBinding Light=#224E55, Dark=White}"/>
+                            <Label Text="View and manage details" 
+                                   FontSize="13" 
+                                   TextColor="{AppThemeBinding Light=#498789, Dark=#A4C2C2}"/>
+                        </VerticalStackLayout>
+                        
+                        <!-- Chevron Arrow -->
+                        <Label Grid.Column="2" 
+                               Text="&#x276F;" 
+                               FontSize="16" 
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#94A3B8, Dark=#64748B}" 
+                               VerticalOptions="Center"
+                               Margin="0,0,8,0"/>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+            
+        </VerticalStackLayout>
+    </ScrollView>
+
+</views:BasePage> 

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             xmlns:converters="clr-namespace:StateMobile.Converters"
+             x:Class="StateMobile.Views.GroupSettingsView"
+             x:Name="this"
+             BackgroundColor="#F5F6F7">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
+            <converters:Base64ImageConverter x:Key="Base64Converter" />
+            <converters:OnlineStatusColorConverter x:Key="OnlineColorConverter" />
+            <Style x:Key="SectionCard" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="StrokeThickness" Value="0" />
+                <Setter Property="Padding" Value="20" />
+                <Setter Property="Margin" Value="0,0,0,20" />
+                <Setter Property="StrokeShape">
+                    <Setter.Value>
+                        <RoundRectangle CornerRadius="16"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ActionButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#F0F2F5" />
+                <Setter Property="TextColor" Value="#1E3A3A" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HeightRequest" Value="40" />
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="20">
+          
+            <Border Style="{StaticResource SectionCard}">
+                <VerticalStackLayout Spacing="20">
+                    <Grid HorizontalOptions="Center" RowDefinitions="Auto, Auto">
+                        <Border HeightRequest="120" WidthRequest="120" StrokeThickness="3" Stroke="#A4C2C2">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="60"/>
+                            </Border.StrokeShape>
+                            <Image x:Name="imgGroupPhoto" 
+                                   Source="user_avatar_placeholder.png" 
+                                   Aspect="AspectFill"/>
+                        </Border>
+                        
+                        <Button Grid.Row="1" 
+                                Text="Change Photo" 
+                                Clicked="OnChangePhotoClicked" 
+                                BackgroundColor="Transparent"
+                                TextColor="#417D7D"
+                                FontSize="13"
+                                FontAttributes="Bold"
+                                Margin="0,5,0,0"
+                                IsVisible="{Binding CurrentUserIsAdmin, Source={x:Reference this}}"/>
+                    </Grid>
+
+                  
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                            <Label Text="Group Name" 
+                                   FontSize="12" 
+                                   TextColor="#6B7280" 
+                                   FontAttributes="Bold" 
+                                   TextTransform="Uppercase"
+                                   VerticalOptions="Center"/>
+                            <Button x:Name="btnEditGroupName"
+                                    Grid.Column="1"
+                                    Text="Edit"
+                                    FontSize="12"
+                                    TextColor="#417D7D"
+                                    BackgroundColor="Transparent"
+                                    Clicked="OnEditGroupNameClicked"
+                                    IsVisible="{Binding CurrentUserIsAdmin, Source={x:Reference this}}"
+                                    VerticalOptions="Center"
+                                    Padding="0"
+                                    HeightRequest="30"/>
+                        </Grid>
+                        
+                        
+                        <Label x:Name="lblGroupName" 
+                               Text="Group Name" 
+                               FontSize="20" 
+                               FontAttributes="Bold" 
+                               TextColor="#1E3A3A"
+                               IsVisible="True"/>
+                        
+                      
+                        <Grid x:Name="gridEditGroupName" IsVisible="False" ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                            <Entry x:Name="entGroupName" 
+                                   Placeholder="Enter group name"
+                                   FontSize="16"
+                                   HeightRequest="45"
+                                   VerticalOptions="Center"/>
+                            <Button Grid.Column="1"
+                                    Text="Save"
+                                    Clicked="OnSaveGroupNameClicked"
+                                    BackgroundColor="#1E3A3A"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    HeightRequest="40"
+                                    Padding="15,0"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+   
+            <Label Text="Members" FontAttributes="Bold" FontSize="18" TextColor="#1E3A3A" Margin="5,0,0,10"/>
+
+            <Border Style="{StaticResource SectionCard}" Padding="0">
+                <VerticalStackLayout>
+                    <VerticalStackLayout x:Name="stackMembers">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:ChatParticipantModel">
+                                <Grid Padding="15,12" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
+                                    <Grid Grid.Column="0">
+                                        <Border HeightRequest="45" WidthRequest="45" StrokeThickness="1" Stroke="#E5E7EB">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="22.5"/>
+                                            </Border.StrokeShape>
+                                            <Image Source="{Binding Photo, Converter={StaticResource Base64Converter}, TargetNullValue='user_avatar_placeholder.png'}" 
+                                                   Aspect="AspectFill"/>
+                                        </Border>
+                                        
+                               
+                                        <Ellipse Fill="{Binding IsOnline, Converter={StaticResource OnlineColorConverter}}" 
+                                                 WidthRequest="12" 
+                                                 HeightRequest="12" 
+                                                 Stroke="White" 
+                                                 StrokeThickness="2"
+                                                 HorizontalOptions="End" 
+                                                 VerticalOptions="End"
+                                                 Margin="0,0,-2,-2"/>
+                                    </Grid>
+
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                        <Label Text="{Binding FullName}" FontAttributes="Bold" FontSize="15" TextColor="#1E3A3A"/>
+                                        <Label Text="Admin" 
+                                               FontSize="12" 
+                                               TextColor="#417D7D" 
+                                               FontAttributes="Bold"
+                                               IsVisible="{Binding IsAdmin}"/>
+                                    </VerticalStackLayout>
+
+                                    <Button Grid.Column="2" 
+                                            Text="&#8942;"
+                                            FontSize="20"
+                                            FontAttributes="Bold"
+                                            BackgroundColor="Transparent"
+                                            TextColor="#6B7280"
+                                            HeightRequest="40"
+                                            WidthRequest="40"
+                                            Padding="0"
+                                            Clicked="OnMemberOptionsClicked"
+                                            CommandParameter="{Binding .}"
+                                            VerticalOptions="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="1" BackgroundColor="#F3F4F6" Margin="15,0"/>
+
+                    <Button Text="Add Members" 
+                            Style="{StaticResource ActionButton}"
+                            Margin="15,10"
+                            HorizontalOptions="Fill"
+                            Clicked="OnAddMembersClicked"/>
+                </VerticalStackLayout>
+            </Border>
+
+        
+            <Button Text="Leave Group" 
+                    TextColor="#EF4444"
+                    BackgroundColor="Transparent"
+                    FontAttributes="Bold"
+                    Margin="0,10,0,40"
+                    Clicked="OnLeaveGroupClicked"/>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.RowSpan="2" IsVisible="{Binding IsBusy, Source={x:Reference this}}" 
+                BackgroundColor="White" HeightRequest="80" WidthRequest="80"
+                HorizontalOptions="Center" VerticalOptions="Center">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="12"/>
+            </Border.StrokeShape>
+            <ActivityIndicator IsRunning="{Binding IsBusy, Source={x:Reference this}}" Color="#A4C2C2"/>
+        </Border>
+    </Grid>
+</ContentView>

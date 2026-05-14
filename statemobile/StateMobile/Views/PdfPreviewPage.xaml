@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:StateMobile.Views"
+             xmlns:converters="clr-namespace:StateMobile.Converters"
+             x:Class="StateMobile.Views.PdfPreviewPage"
+             x:Name="thisPage"
+             NavigationPage.HasNavigationBar="False"
+             Title="Preview"
+             BackgroundColor="#F3F4F6">
+
+    <ContentPage.Resources>
+        <converters:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageSourceConverter" />
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <Shadow x:Key="PageCardShadow"
+                Brush="#22000000"
+                Offset="0,6"
+                Radius="12"
+                Opacity="0.35" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *, Auto" BackgroundColor="#F3F4F6">
+        <Border Grid.Row="0"
+                BackgroundColor="{StaticResource Primary}"
+                StrokeThickness="0"
+                Padding="14,12">
+            <Grid RowDefinitions="Auto,Auto" RowSpacing="6">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                    <Button Text="Back"
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            Clicked="OnBackClicked" />
+
+                    <Label Grid.Column="1"
+                           Text="Preview"
+                           TextColor="White"
+                           FontAttributes="Bold"
+                           FontSize="18"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center" />
+
+                    <Button Grid.Column="2"
+                            Text="Sign"
+                            BackgroundColor="Transparent"
+                            TextColor="#E8FFFB"
+                            Clicked="OnAddSignatureClicked" />
+                </Grid>
+
+                                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label x:Name="lblFileName"
+                           Text="{Binding Document.FileName}"
+                           TextColor="#D7F0ED"
+                           FontSize="13"
+                           MaxLines="1"
+                           LineBreakMode="TailTruncation"
+                           VerticalTextAlignment="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnRenamePdfTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+
+                    <Button Grid.Column="1"
+                            Text="Rename"
+                            BackgroundColor="#4A7E81"
+                            TextColor="White"
+                            FontSize="12"
+                            HeightRequest="30"
+                            Padding="10,0"
+                            Clicked="OnRenamePdfClicked" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" BackgroundColor="#050505">
+            <CollectionView x:Name="pagesCollectionView"
+                            ItemsSource="{Binding PreviewPages}"
+                            Margin="0"
+                            BackgroundColor="#050505"
+                            Scrolled="OnPagesCollectionViewScrolled">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="26" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="16,12" HorizontalOptions="Fill">
+                            <Border BackgroundColor="White"
+                                    Stroke="#E5E7EB"
+                                    StrokeThickness="1"
+                                    Padding="0"
+                                    WidthRequest="{Binding Source={x:Reference thisPage}, Path=PreviewCardWidth}"
+                                    Shadow="{StaticResource PageCardShadow}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border"
+                                                 Binding="{Binding IsSelected}"
+                                                 Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+
+                                <Grid BackgroundColor="Transparent">
+                                    <Image Source="{Binding PageBytes, Converter={StaticResource ByteArrayToImageSourceConverter}}"
+                                           Aspect="AspectFit"
+                                           BackgroundColor="White"
+                                           HorizontalOptions="Fill"
+                                           VerticalOptions="Fill" />
+
+                                    <Grid BackgroundColor="Transparent"
+                                          InputTransparent="False"
+                                          ZIndex="1">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnPageTapped" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+
+                                    <Border BackgroundColor="#111827CC"
+                                            StrokeThickness="0"
+                                            Padding="8,3"
+                                            HorizontalOptions="Start"
+                                            VerticalOptions="Start"
+                                            Margin="10">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+                                        <Label Text="{Binding PageIndicatorText}"
+                                               TextColor="White"
+                                               FontSize="11"
+                                               FontAttributes="Bold" />
+                                    </Border>
+
+                                    <AbsoluteLayout BindableLayout.ItemsSource="{Binding Signatures}"
+                                                   ZIndex="2">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid AbsoluteLayout.LayoutBounds="{Binding Bounds}"
+                                                      AbsoluteLayout.LayoutFlags="None">
+                                                    <Border BackgroundColor="Transparent"
+                                                            Stroke="#18B4AA"
+                                                            StrokeThickness="2"
+                                                            Padding="0"
+                                                            InputTransparent="{Binding IsLocked}">
+                                                        <Border.Triggers>
+                                                            <DataTrigger TargetType="Border"
+                                                                         Binding="{Binding IsLocked}"
+                                                                         Value="True">
+                                                                <Setter Property="StrokeThickness" Value="0" />
+                                                                <Setter Property="Padding" Value="0" />
+                                                            </DataTrigger>
+                                                        </Border.Triggers>
+                                                        <Border.StrokeShape>
+                                                            <RoundRectangle CornerRadius="8" />
+                                                        </Border.StrokeShape>
+
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Tapped="OnSignatureTapped" />
+                                                            <PanGestureRecognizer PanUpdated="OnPanUpdated" />
+                                                        </Border.GestureRecognizers>
+
+                                                        <Image Source="{Binding PreviewBytes, Converter={StaticResource ByteArrayToImageSourceConverter}}"
+                                                               Aspect="AspectFit" />
+                                                    </Border>
+
+                                                    <Border BackgroundColor="#E6FFFB"
+                                                            Stroke="#5ECFC4"
+                                                            StrokeThickness="2"
+                                                            HeightRequest="36"
+                                                            WidthRequest="36"
+                                                            HorizontalOptions="Start"
+                                                            VerticalOptions="Start"
+                                                            Margin="-18,-18,0,0"
+                                                            ZIndex="5"
+                                                            IsVisible="{Binding IsEditing}">
+                                                        <Border.StrokeShape>
+                                                            <RoundRectangle CornerRadius="18" />
+                                                        </Border.StrokeShape>
+                                                        <Image Source="signature_remove_icon.svg"
+                                                               HeightRequest="14"
+                                                               WidthRequest="14"
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="Center" />
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Tapped="OnRemoveSignatureTapped" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+
+                                                    <Border BackgroundColor="#E6FFFB"
+                                                            Stroke="#5ECFC4"
+                                                            StrokeThickness="2"
+                                                            HeightRequest="36"
+                                                            WidthRequest="36"
+                                                            HorizontalOptions="End"
+                                                            VerticalOptions="End"
+                                                            Margin="0,0,-18,-18"
+                                                            ZIndex="5"
+                                                            IsVisible="{Binding IsEditing}">
+                                                        <Border.StrokeShape>
+                                                            <RoundRectangle CornerRadius="18" />
+                                                        </Border.StrokeShape>
+                                                        <Image Source="signature_resize_icon.svg"
+                                                               HeightRequest="14"
+                                                               WidthRequest="14"
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="Center" />
+                                                        <Border.GestureRecognizers>
+                                                            <PanGestureRecognizer PanUpdated="OnResizeHandlePan" />
+                                                        </Border.GestureRecognizers>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </AbsoluteLayout>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="260" BackgroundColor="Transparent" />
+                </CollectionView.Footer>
+            </CollectionView>
+        </Grid>
+
+        <Border Grid.Row="2"
+                BackgroundColor="#111827"
+                StrokeThickness="0"
+                Padding="14,12">
+            <Grid RowDefinitions="Auto, Auto" RowSpacing="10">
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="12">
+                    <Button Grid.Column="0"
+                    Text="SAVE PDF"
+                    BackgroundColor="#2563EB"
+                            TextColor="White"
+                    Clicked="OnSaveClicked" />
+                <Button Grid.Column="1"
+                            Text="SEND PDF"
+                            BackgroundColor="#059669"
+                            TextColor="White"
+                            Clicked="OnSendClicked" />
+                </Grid>
+
+                <Border x:Name="signatureTools"
+                    IsVisible="False"
+                        BackgroundColor="#182026"
+                        Stroke="#26323A"
+                        StrokeThickness="1"
+                        Padding="12,10">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="8">
+                        <Grid ColumnDefinitions="Auto, *, Auto, Auto" ColumnSpacing="12">
+                            <Label Text="Thickness"
+                                   TextColor="White"
+                                   VerticalOptions="Center" />
+                            <Slider Grid.Column="1"
+                                    Minimum="0.7"
+                                    Maximum="2.0"
+                                    Value="1"
+                                    ValueChanged="OnSignatureThicknessChanged"
+                                    MinimumTrackColor="{StaticResource Primary}"
+                                    ThumbColor="{StaticResource Primary}" />
+                            <Label Grid.Column="2"
+                                   x:Name="lblSignatureScale"
+                                   Text="1.0x"
+                                   TextColor="#D1D5DB"
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="3"
+                                    Text="OK"
+                                    BackgroundColor="#059669"
+                                    TextColor="White"
+                                    HeightRequest="34"
+                                    Padding="14,0"
+                                    Clicked="OnSignatureEditOkClicked" />
+                        </Grid>
+
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto, Auto, Auto, Auto, Auto" ColumnSpacing="10">
+                            <Label Text="Color"
+                                   TextColor="White"
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="1"
+                                    Text=""
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    CornerRadius="14"
+                                    BackgroundColor="#000000"
+                                    CommandParameter="#000000"
+                                    Clicked="OnSignatureColorClicked" />
+                            <Button Grid.Column="2"
+                                    Text=""
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    CornerRadius="14"
+                                    BackgroundColor="#498789"
+                                    CommandParameter="#498789"
+                                    Clicked="OnSignatureColorClicked" />
+                            <Button Grid.Column="3"
+                                    Text=""
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    CornerRadius="14"
+                                    BackgroundColor="#DC2626"
+                                    CommandParameter="#DC2626"
+                                    Clicked="OnSignatureColorClicked" />
+                            <Button Grid.Column="4"
+                                    Text=""
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    CornerRadius="14"
+                                    BackgroundColor="#FFFFFF"
+                                    CommandParameter="#FFFFFF"
+                                    Clicked="OnSignatureColorClicked" />
+                        </Grid>
+
+                        <Label Grid.Row="2"
+                               Text="Use OK when you’re done adjusting the signature."
+                               TextColor="#9CA3AF"
+                               FontSize="12" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid x:Name="signatureOverlay" Grid.RowSpan="3" BackgroundColor="#A0000000" IsVisible="False">
+            <views:SignaturePadView x:Name="signaturePad"
+                                    SignatureCompleted="OnSignatureCompleted"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="Fill"
+                                    Margin="0"/>
+        </Grid>
+
+        <Grid x:Name="loadingOverlay" Grid.RowSpan="3" BackgroundColor="#A0000000" IsVisible="False">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="15">
+                <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" WidthRequest="50"/>
+                <Label x:Name="lblLoadingText" Text="Generating PDF..." TextColor="White" FontSize="16" HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

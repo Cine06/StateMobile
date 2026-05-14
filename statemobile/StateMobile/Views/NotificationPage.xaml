@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             xmlns:viewmodels="clr-namespace:StateMobile.ViewModels"
+             xmlns:converters="clr-namespace:StateMobile.Converters"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="StateMobile.Views.NotificationPage"
+             x:Name="this"
+             Title="Notifications"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#0F0F1E}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:BoolToSelectionModeConverter x:Key="BoolToSelectionModeConverter" />
+            <converters:SelectedBackgroundConverter x:Key="SelectedBackgroundConverter" />
+            <converters:UnreadBackgroundConverter x:Key="UnreadBackgroundConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:StarColorConverter x:Key="StarColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <Grid RowDefinitions="Auto, *">
+        <HorizontalStackLayout Grid.Row="0" 
+                               IsVisible="{Binding IsSelectionMode}" 
+                               BackgroundColor="{AppThemeBinding Light=#F0F2F5, Dark=#151525}" 
+                               Padding="10" 
+                               Spacing="10">
+            <Button Text="Select All" 
+                    Command="{Binding SelectAllCommand}" 
+                    FontSize="12" 
+                    HeightRequest="35"/>
+            <Button Text="Delete Selected" 
+                    Command="{Binding BulkDeleteCommand}" 
+                    BackgroundColor="Red" 
+                    TextColor="White" 
+                    FontSize="12" 
+                    HeightRequest="35"/>
+            <Button Text="Cancel" 
+                    Command="{Binding CancelSelectionCommand}" 
+                    FontSize="12" 
+                    HeightRequest="35"/>
+            <Label Text="{Binding SelectedItems.Count, StringFormat='{0} selected'}" 
+                   VerticalOptions="Center" 
+                   FontAttributes="Bold" 
+                   TextColor="{AppThemeBinding Light=#1877F2, Dark=#498789}" 
+                   Margin="10,0,0,0"/>
+        </HorizontalStackLayout>
+
+        <RefreshView Grid.Row="1" 
+                     IsRefreshing="{Binding IsRefreshing}" 
+                     Command="{Binding LoadNotificationsCommand}">
+
+            <CollectionView ItemsSource="{Binding Notifications}"
+                            SelectionMode="None">
+
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="20" VerticalOptions="Center">
+                        <Label Text="No notifications yet" 
+                               TextColor="{AppThemeBinding Light=#65676B, Dark=#A0AEC0}" 
+                               FontSize="16" 
+                               HorizontalOptions="Center"/>
+                    </StackLayout>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:NotificationModel">
+                        <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto" 
+                              Padding="16,12" 
+                              BackgroundColor="{Binding IsSelected, Converter={StaticResource SelectedBackgroundConverter}}">
+
+                            <Grid.Behaviors>
+                                <toolkit:TouchBehavior
+                                    LongPressDuration="800"
+                                    LongPressCommand="{Binding Source={x:Reference this}, Path=BindingContext.EnterSelectionCommand}"
+                                    LongPressCommandParameter="{Binding .}" />
+                            </Grid.Behaviors>
+
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer 
+                                    Command="{Binding Source={x:Reference this}, Path=BindingContext.TapCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+
+                    
+                            <CheckBox Grid.Column="0"
+                                      IsVisible="{Binding Source={x:Reference this}, Path=BindingContext.IsSelectionMode}"
+                                      IsChecked="{Binding IsSelected}"
+                                      VerticalOptions="Center"
+                                      Margin="0,0,12,0"/>
+
+                            <Border Grid.Column="1"
+                                    HeightRequest="10"
+                                    WidthRequest="10"
+                                    StrokeShape="RoundRectangle 5"
+                                    BackgroundColor="{Binding UnreadDotColor}"
+                                    Stroke="Transparent"
+                                    VerticalOptions="Center"
+                                    Margin="0,0,8,0"
+                                    IsVisible="{Binding UnreadDotVisible}"/>
+                        
+                            <BoxView Grid.Column="1"
+                                     WidthRequest="10"
+                                     HeightRequest="10"
+                                     Color="Transparent"
+                                     IsVisible="{Binding UnreadDotVisible, Converter={StaticResource InvertedBoolConverter}}"
+                                     Margin="0,0,8,0"/>
+
+                            
+                            <Border Grid.Column="2" 
+                                    HeightRequest="42" 
+                                    WidthRequest="42" 
+                                    StrokeShape="RoundRectangle 21" 
+                                    BackgroundColor="{Binding IconColor}" 
+                                    Stroke="Transparent"
+                                    VerticalOptions="Start"
+                                    Margin="0,2,0,0">
+                                <Label Text="{Binding Initial}" 
+                                       FontSize="20" 
+                                       FontAttributes="Bold"
+                                       TextColor="White"
+                                       HorizontalOptions="Center" 
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="3" 
+                                               VerticalOptions="Center" 
+                                               Margin="14,0,10,0"
+                                               Spacing="1">
+
+                                <Label Text="{Binding Title}" 
+                                       FontSize="15" 
+                                       TextColor="{AppThemeBinding Light=#202124, Dark=White}" 
+                                       FontAttributes="{Binding UnreadFontWeight}"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="1"/>
+
+                                <Label Text="{Binding MessagePreview}" 
+                                       FontSize="13" 
+                                       TextColor="{AppThemeBinding Light=#5F6368, Dark=#A0AEC0}"
+                                       FontAttributes="{Binding UnreadFontWeight}"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="1"/>
+                            </VerticalStackLayout>
+
+                            
+                            <Label Grid.Column="4"
+                                   Text="{Binding TimeAgo}" 
+                                   TextColor="{AppThemeBinding Light=#5F6368, Dark=White}" 
+                                   FontSize="11"
+                                   HorizontalOptions="End"
+                                   VerticalOptions="Start"
+                                   Margin="0,2,0,0"
+                                   LineBreakMode="NoWrap"
+                                   FontAttributes="{Binding UnreadFontWeight}"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <VerticalStackLayout Grid.Row="1" IsVisible="{Binding IsBusy}" BackgroundColor="{AppThemeBinding Light=White, Dark=#0F0F1E}" Spacing="0">
+            <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto" Padding="16,12" BackgroundColor="Transparent">
+                <BoxView Grid.Column="0" WidthRequest="0" Margin="0,0,12,0" />
+                <BoxView Grid.Column="1" WidthRequest="10" HeightRequest="10" Margin="0,0,8,0" Color="Transparent"/>
+                <Border Grid.Column="2" HeightRequest="42" WidthRequest="42" StrokeShape="RoundRectangle 21" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}" Stroke="Transparent" VerticalOptions="Start" Margin="0,2,0,0" />
+                <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" Margin="14,0,10,0" Spacing="8">
+                    <BoxView HeightRequest="14" WidthRequest="200" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                    <BoxView HeightRequest="12" WidthRequest="140" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="4" HeightRequest="12" WidthRequest="40" HorizontalOptions="End" VerticalOptions="Start" Margin="0,2,0,0" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+            </Grid>
+            
+            
+            <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto" Padding="16,12" BackgroundColor="Transparent">
+                <BoxView Grid.Column="0" WidthRequest="0" Margin="0,0,12,0" />
+                <BoxView Grid.Column="1" WidthRequest="10" HeightRequest="10" Margin="0,0,8,0" Color="Transparent"/>
+                <Border Grid.Column="2" HeightRequest="42" WidthRequest="42" StrokeShape="RoundRectangle 21" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}" Stroke="Transparent" VerticalOptions="Start" Margin="0,2,0,0" />
+                <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" Margin="14,0,10,0" Spacing="8">
+                    <BoxView HeightRequest="14" WidthRequest="180" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                    <BoxView HeightRequest="12" WidthRequest="100" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="4" HeightRequest="12" WidthRequest="30" HorizontalOptions="End" VerticalOptions="Start" Margin="0,2,0,0" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+            </Grid>
+            
+            
+            <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto" Padding="16,12" BackgroundColor="Transparent">
+                <BoxView Grid.Column="0" WidthRequest="0" Margin="0,0,12,0" />
+                <BoxView Grid.Column="1" WidthRequest="10" HeightRequest="10" Margin="0,0,8,0" Color="Transparent"/>
+                <Border Grid.Column="2" HeightRequest="42" WidthRequest="42" StrokeShape="RoundRectangle 21" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}" Stroke="Transparent" VerticalOptions="Start" Margin="0,2,0,0" />
+                <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" Margin="14,0,10,0" Spacing="8">
+                    <BoxView HeightRequest="14" WidthRequest="220" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                    <BoxView HeightRequest="12" WidthRequest="160" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="4" HeightRequest="12" WidthRequest="50" HorizontalOptions="End" VerticalOptions="Start" Margin="0,2,0,0" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+            </Grid>
+            
+         
+            <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto" Padding="16,12" BackgroundColor="Transparent">
+                <BoxView Grid.Column="0" WidthRequest="0" Margin="0,0,12,0" />
+                <BoxView Grid.Column="1" WidthRequest="10" HeightRequest="10" Margin="0,0,8,0" Color="Transparent"/>
+                <Border Grid.Column="2" HeightRequest="42" WidthRequest="42" StrokeShape="RoundRectangle 21" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}" Stroke="Transparent" VerticalOptions="Start" Margin="0,2,0,0" />
+                <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" Margin="14,0,10,0" Spacing="8">
+                    <BoxView HeightRequest="14" WidthRequest="170" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                    <BoxView HeightRequest="12" WidthRequest="120" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="4" HeightRequest="12" WidthRequest="35" HorizontalOptions="End" VerticalOptions="Start" Margin="0,2,0,0" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+            </Grid>
+
+        
+            <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto" Padding="16,12" BackgroundColor="Transparent">
+                <BoxView Grid.Column="0" WidthRequest="0" Margin="0,0,12,0" />
+                <BoxView Grid.Column="1" WidthRequest="10" HeightRequest="10" Margin="0,0,8,0" Color="Transparent"/>
+                <Border Grid.Column="2" HeightRequest="42" WidthRequest="42" StrokeShape="RoundRectangle 21" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}" Stroke="Transparent" VerticalOptions="Start" Margin="0,2,0,0" />
+                <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" Margin="14,0,10,0" Spacing="8">
+                    <BoxView HeightRequest="14" WidthRequest="190" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                    <BoxView HeightRequest="12" WidthRequest="130" HorizontalOptions="Start" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="4" HeightRequest="12" WidthRequest="45" HorizontalOptions="End" VerticalOptions="Start" Margin="0,2,0,0" CornerRadius="4" BackgroundColor="{AppThemeBinding Light=#EAEAEA, Dark=#2A2A3E}"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

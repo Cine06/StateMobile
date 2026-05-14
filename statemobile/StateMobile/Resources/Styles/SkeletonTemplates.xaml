@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- List Item Skeleton (Avatar + Lines) -->
+    <ControlTemplate x:Key="ListItemSkeletonTemplate">
+        <Grid Padding="15,12" ColumnDefinitions="Auto, 55, *, Auto" ColumnSpacing="12" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+            <!-- Avatar -->
+            <BoxView Grid.Column="1" HeightRequest="50" WidthRequest="50" CornerRadius="25" Style="{StaticResource SkeletonBoxStyle}"/>
+            
+            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="8">
+                <!-- Name line -->
+                <BoxView HeightRequest="16" WidthRequest="120" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}"/>
+                <!-- Subtitle line -->
+                <BoxView HeightRequest="14" WidthRequest="180" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.6"/>
+            </VerticalStackLayout>
+            
+            <!-- Timestamp -->
+            <BoxView Grid.Column="3" HeightRequest="12" WidthRequest="40" VerticalOptions="Start" Margin="0,5,0,0" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+        </Grid>
+    </ControlTemplate>
+
+    <!-- Project Card Skeleton (Large Image + Lines) -->
+    <ControlTemplate x:Key="ProjectCardSkeletonTemplate">
+        <Border StrokeShape="RoundRectangle 8" Margin="0,0,0,25" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}" StrokeThickness="1" Stroke="#E0E0E0">
+            <VerticalStackLayout Spacing="0">
+                <!-- Project Image -->
+                <BoxView HeightRequest="160" Style="{StaticResource SkeletonBoxStyle}" CornerRadius="0"/>
+                
+                <VerticalStackLayout Padding="18" Spacing="8">
+                    <!-- Particulars -->
+                    <BoxView HeightRequest="18" WidthRequest="200" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}"/>
+                    <!-- Project Name -->
+                    <BoxView HeightRequest="14" WidthRequest="150" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.7"/>
+                    <!-- Engineer -->
+                    <BoxView HeightRequest="12" WidthRequest="100" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+    </ControlTemplate>
+
+    <!-- Project List Item Skeleton -->
+    <ControlTemplate x:Key="ProjectListSkeletonTemplate">
+        <Border StrokeShape="RoundRectangle 8" Margin="0,0,0,10" Padding="15,10" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}" StrokeThickness="1" Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                <VerticalStackLayout Spacing="8">
+                    <BoxView HeightRequest="18" WidthRequest="220" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}"/>
+                    <HorizontalStackLayout Spacing="10">
+                        <BoxView HeightRequest="12" WidthRequest="80" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.6"/>
+                        <BoxView HeightRequest="12" WidthRequest="60" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.6"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="1" HeightRequest="16" WidthRequest="16" VerticalOptions="Center" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.3"/>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <!-- Notification Skeleton -->
+    <ControlTemplate x:Key="NotificationSkeletonTemplate">
+        <Grid ColumnDefinitions="Auto, 42, *, Auto" Padding="16,12" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+             <!-- Icon -->
+            <BoxView Grid.Column="1" HeightRequest="42" WidthRequest="42" CornerRadius="21" Style="{StaticResource SkeletonBoxStyle}"/>
+            
+            <VerticalStackLayout Grid.Column="2" Margin="14,0,10,0" VerticalOptions="Center" Spacing="6">
+                <BoxView HeightRequest="16" WidthRequest="140" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}"/>
+                <BoxView HeightRequest="14" WidthRequest="200" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.6"/>
+            </VerticalStackLayout>
+            
+            <BoxView Grid.Column="3" HeightRequest="12" WidthRequest="30" VerticalOptions="Start" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+        </Grid>
+    </ControlTemplate>
+
+    <!-- Project Diary Entry Skeleton -->
+    <ControlTemplate x:Key="ProjectEntrySkeletonTemplate">
+        <VerticalStackLayout Spacing="15" Margin="10,10,10,20">
+            <Border Padding="15" StrokeShape="RoundRectangle 8" BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#1E1E1E}" Stroke="#E2E8F0">
+                <VerticalStackLayout Spacing="15">
+                    <BoxView HeightRequest="18" WidthRequest="120" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}"/>
+                    <Grid ColumnDefinitions="125, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="8">
+                        <BoxView Grid.Row="0" Grid.Column="0" HeightRequest="14" WidthRequest="80" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                        <BoxView Grid.Row="0" Grid.Column="1" HeightRequest="14" WidthRequest="100" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.7"/>
+                        <BoxView Grid.Row="1" Grid.Column="0" HeightRequest="14" WidthRequest="100" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                        <BoxView Grid.Row="1" Grid.Column="1" HeightRequest="14" WidthRequest="150" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.7"/>
+                        <BoxView Grid.Row="2" Grid.Column="0" HeightRequest="14" WidthRequest="80" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                        <BoxView Grid.Row="2" Grid.Column="2" HeightRequest="30" WidthRequest="200" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.7"/>
+                    </Grid>
+                    <BoxView HeightRequest="12" WidthRequest="150" HorizontalOptions="Start" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.4"/>
+                </VerticalStackLayout>
+            </Border>
+            <BoxView HeightRequest="180" WidthRequest="300" HorizontalOptions="Start" CornerRadius="8" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.3"/>
+        </VerticalStackLayout>
+    </ControlTemplate>
+
+    <!-- Profile Information Skeleton -->
+    <ControlTemplate x:Key="ProfileInfoSkeletonTemplate">
+        <VerticalStackLayout Spacing="20" Padding="20">
+            <BoxView HeightRequest="120" WidthRequest="120" CornerRadius="60" HorizontalOptions="Center" Style="{StaticResource SkeletonBoxStyle}"/>
+            
+            <Border StrokeShape="RoundRectangle 15" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}" StrokeThickness="0" Padding="20">
+                <VerticalStackLayout Spacing="25">
+                    <VerticalStackLayout Spacing="8">
+                        <BoxView HeightRequest="12" WidthRequest="80" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                        <BoxView HeightRequest="18" WidthRequest="200" Style="{StaticResource SkeletonBoxStyle}"/>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Spacing="8">
+                        <BoxView HeightRequest="12" WidthRequest="80" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                        <BoxView HeightRequest="18" WidthRequest="150" Style="{StaticResource SkeletonBoxStyle}"/>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Spacing="8">
+                        <BoxView HeightRequest="12" WidthRequest="80" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                        <BoxView HeightRequest="18" WidthRequest="120" Style="{StaticResource SkeletonBoxStyle}"/>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Spacing="8">
+                        <BoxView HeightRequest="12" WidthRequest="80" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.5"/>
+                        <BoxView HeightRequest="18" WidthRequest="180" Style="{StaticResource SkeletonBoxStyle}"/>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ControlTemplate>
+
+    <!-- Chat Message Skeleton -->
+    <ControlTemplate x:Key="ChatMessageSkeletonTemplate">
+        <ScrollView>
+            <VerticalStackLayout Spacing="18" Padding="15">
+                <!-- Incoming message -->
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="Start">
+                    <BoxView HeightRequest="36" WidthRequest="36" CornerRadius="18" Style="{StaticResource SkeletonBoxStyle}"/>
+                    <BoxView HeightRequest="45" WidthRequest="180" CornerRadius="15" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.8"/>
+                </HorizontalStackLayout>
+                
+                <!-- Outgoing message -->
+                <BoxView HeightRequest="60" WidthRequest="220" CornerRadius="18" HorizontalOptions="End" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.6"/>
+                
+                <!-- Incoming message (longer) -->
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="Start">
+                    <BoxView HeightRequest="36" WidthRequest="36" CornerRadius="18" Style="{StaticResource SkeletonBoxStyle}"/>
+                    <BoxView HeightRequest="90" WidthRequest="240" CornerRadius="15" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.8"/>
+                </HorizontalStackLayout>
+
+                <!-- Outgoing message (short) -->
+                <BoxView HeightRequest="38" WidthRequest="120" CornerRadius="18" HorizontalOptions="End" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.6"/>
+
+                <!-- Incoming message -->
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="Start">
+                    <BoxView HeightRequest="36" WidthRequest="36" CornerRadius="18" Style="{StaticResource SkeletonBoxStyle}"/>
+                    <BoxView HeightRequest="45" WidthRequest="160" CornerRadius="15" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.8"/>
+                </HorizontalStackLayout>
+
+                <!-- Outgoing message -->
+                <BoxView HeightRequest="50" WidthRequest="200" CornerRadius="18" HorizontalOptions="End" Style="{StaticResource SkeletonBoxStyle}" Opacity="0.6"/>
+            </VerticalStackLayout>
+        </ScrollView>
+    </ControlTemplate>
+</ResourceDictionary>

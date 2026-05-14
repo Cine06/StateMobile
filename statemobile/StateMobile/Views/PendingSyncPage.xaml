@@ -1,0 +1,239 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             x:Class="StateMobile.Views.PendingSyncPage"
+             x:Name="ThisPage"
+             Title="Sync Center"
+             BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#0F172A}">
+
+    <Grid RowDefinitions="Auto, *, Auto">
+        
+        <!-- Refined Header Section with State Management -->
+        <VerticalStackLayout Grid.Row="0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E293B}">
+            <!-- Default Header -->
+            <Grid x:Name="DefaultHeader" Padding="25,20" ColumnDefinitions="*, Auto">
+                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                    <Label Text="Offline Sync Center" FontSize="22" FontAttributes="Bold" TextColor="#1E293B" />
+                    <Label x:Name="StatusLabel" Text="Check your pending records" FontSize="12" TextColor="#64748B" />
+                </VerticalStackLayout>
+                
+                <Button Grid.Column="1" 
+                        Text="Refresh" 
+                        Clicked="OnRefreshClicked" 
+                        BackgroundColor="#F1F5F9" 
+                        TextColor="#3D6D6E" 
+                        FontAttributes="Bold"
+                        FontSize="11" 
+                        Padding="15,0"
+                        HeightRequest="36"
+                        CornerRadius="6" />
+            </Grid>
+
+            <!-- Selection State Header (Hidden by default) -->
+            <Grid x:Name="SelectionControls" IsVisible="False" Padding="25,15" ColumnDefinitions="*, Auto" BackgroundColor="#E2E8F0">
+                <HorizontalStackLayout Grid.Column="0" Spacing="20" VerticalOptions="Center">
+                    <Label Text="Selection Mode" VerticalOptions="Center" FontAttributes="Bold" TextColor="#1E293B" FontSize="14" />
+                    <Button Text="Select All" Clicked="OnSelectAllClicked" BackgroundColor="Transparent" TextColor="#3D6D6E" FontSize="12" FontAttributes="Bold" Padding="0" HeightRequest="30" />
+                </HorizontalStackLayout>
+                <Button Grid.Column="1" Text="Cancel" Clicked="OnCancelSelectionClicked" BackgroundColor="Transparent" TextColor="#EF4444" FontSize="12" FontAttributes="Bold" Padding="0" HeightRequest="30" />
+            </Grid>
+            
+            <BoxView HeightRequest="1" BackgroundColor="#E2E8F0" />
+        </VerticalStackLayout>
+
+        <!-- Main Content Area -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20" Spacing="25">
+                
+                <!-- Section 1: Diary Entries Queue -->
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Pending Diary Entries" FontSize="14" FontAttributes="Bold" TextColor="#475569" Margin="5,0" />
+
+                    <CollectionView x:Name="PendingList">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:OfflineDiaryEntry">
+                                <Border StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E293B}" StrokeShape="RoundRectangle 8" Margin="0,0,0,15">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnEntryLongPressed" CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Border.Shadow>
+                                        <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.04" />
+                                    </Border.Shadow>
+                                    
+                                    <Grid Padding="20" RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="Auto, *">
+                                        <!-- Selection Checkbox -->
+                                        <CheckBox Grid.RowSpan="4" Grid.Column="0" 
+                                                  IsChecked="{Binding IsSelected}" 
+                                                  IsVisible="{Binding Source={x:Reference ThisPage}, Path=IsSelectionMode}"
+                                                  Color="#3D6D6E" 
+                                                  VerticalOptions="Center" 
+                                                  Margin="-10,0,15,0" 
+                                                  Scale="0.9" />
+
+                                        <!-- Card Header: Date and Project ID -->
+                                        <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*, Auto" Margin="0,0,0,15">
+                                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                                <Label Text="{Binding Particular}" FontSize="16" FontAttributes="Bold" TextColor="#1E293B" LineBreakMode="TailTruncation" />
+                                                <Label Text="{Binding DiaryDate}" FontSize="13" TextColor="#3D6D6E" />
+                                                <Label Text="{Binding ControlNo, StringFormat='ID: {0}'}" FontSize="10" TextColor="#94A3B8" Margin="0,2,0,0" />
+                                            </VerticalStackLayout>
+                                            
+                                            <Button Grid.Column="1" 
+                                                    Text="Remove" 
+                                                    IsVisible="{Binding Source={x:Reference ThisPage}, Path=IsSelectionMode, Converter={StaticResource InvertedBoolConverter}}"
+                                                    Clicked="OnDeleteEntryClicked" 
+                                                    CommandParameter="{Binding .}" 
+                                                    BackgroundColor="Transparent" 
+                                                    TextColor="#EF4444" 
+                                                    FontSize="11" 
+                                                    FontAttributes="Bold"
+                                                    Padding="0" 
+                                                    HeightRequest="30"
+                                                    VerticalOptions="Start" />
+                                        </Grid>
+
+                                        <!-- Detailed Info Grid -->
+                                        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="120, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="10" VerticalOptions="Start">
+                                            <Label Grid.Row="0" Grid.Column="0" Text="Weather:" FontSize="13" FontAttributes="Bold" TextColor="#475569" />
+                                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding DiaryWeather, Converter={StaticResource WeatherToStatusConverter}}" FontSize="13" TextColor="#64748B" />
+
+                                            <Label Grid.Row="1" Grid.Column="0" Text="Weather Remarks:" FontSize="13" FontAttributes="Bold" TextColor="#475569" />
+                                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding WeatherRemarks}" FontSize="13" TextColor="#64748B" />
+
+                                            <Label Grid.Row="2" Grid.Column="0" Text="Activities:" FontSize="13" FontAttributes="Bold" TextColor="#475569" VerticalOptions="Start" />
+                                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding Activities}" FontSize="13" TextColor="#64748B" LineBreakMode="WordWrap" />
+                                        </Grid>
+
+                                        <!-- Footer Info -->
+                                        <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="8" Margin="0,20,0,0">
+                                            <BoxView HeightRequest="1" BackgroundColor="#E2E8F0" />
+                                            <Label Text="{Binding AuditUser, StringFormat='Posted By: {0}'}" FontSize="11" TextColor="#94A3B8" />
+                                        </VerticalStackLayout>
+
+                                        <!-- Photo Gallery Area (Direct Binding) -->
+                                        <VerticalStackLayout Grid.Row="3" Grid.Column="1" 
+                                                IsVisible="{Binding HasPhotos}"
+                                                Spacing="12" Margin="0,15,0,0">
+                                            <Label Text="{Binding DebugInfo}" FontSize="11" TextColor="#3D6D6E" FontAttributes="Bold" />
+                                            
+                                            <Border StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="#F8FAFC" Padding="0">
+                                                <Grid RowDefinitions="200, Auto">
+                                                    <Image Grid.Row="0" 
+                                                           Source="{Binding PreviewPhotoPath, Converter={StaticResource StringToImageSourceConverter}}" 
+                                                           Aspect="AspectFill" 
+                                                           HeightRequest="200"
+                                                           BackgroundColor="#E2E8F0" />
+                                                    <VerticalStackLayout Grid.Row="1" Padding="12" Spacing="4">
+                                                        <HorizontalStackLayout Spacing="5">
+                                                            <Label Text="Local Path:" FontSize="10" FontAttributes="Bold" TextColor="#475569" />
+                                                            <Label Text="{Binding PreviewPhotoPath}" FontSize="9" TextColor="#64748B" MaxLines="1" LineBreakMode="TailTruncation" />
+                                                        </HorizontalStackLayout>
+                                                        <Label Text="Attachment ready for synchronization" 
+                                                               FontSize="11" 
+                                                               TextColor="#3D6D6E" 
+                                                               FontAttributes="Italic" />
+                                                    </VerticalStackLayout>
+                                                </Grid>
+                                            </Border>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                        
+                        <CollectionView.EmptyView>
+                            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="60" Spacing="10">
+                                <Label Text="QUEUE IS EMPTY" CharacterSpacing="2" FontSize="12" FontAttributes="Bold" TextColor="#94A3B8" HorizontalOptions="Center" />
+                                <Label Text="All records are synchronized with the server." FontSize="13" TextColor="#64748B" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <!-- Section 2: Orphaned Attachments -->
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Unlinked Attachments" FontSize="14" FontAttributes="Bold" TextColor="#475569" Margin="5,0" />
+                    
+                    <CollectionView x:Name="PendingFilesList">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:OfflineDiaryFile">
+                                <Border StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E293B}" StrokeShape="RoundRectangle 8" Margin="0,0,0,15">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnEntryLongPressed" CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Border.Shadow>
+                                        <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.04" />
+                                    </Border.Shadow>
+                                    <Grid Padding="20" ColumnDefinitions="Auto, Auto, *, Auto" RowDefinitions="Auto, Auto, Auto">
+                                        <CheckBox Grid.RowSpan="3" Grid.Column="0" 
+                                                  IsChecked="{Binding IsSelected}" 
+                                                  IsVisible="{Binding Source={x:Reference ThisPage}, Path=IsSelectionMode}"
+                                                  Color="#3D6D6E" 
+                                                  VerticalOptions="Center" 
+                                                  Margin="-10,0,15,0" 
+                                                  Scale="0.9" />
+
+                                        <Border Grid.RowSpan="3" Grid.Column="1" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" Margin="0,0,15,0" WidthRequest="90" HeightRequest="110">
+                                            <Image Source="{Binding FilePath, Converter={StaticResource StringToImageSourceConverter}}" Aspect="AspectFill" BackgroundColor="#F1F5F9" />
+                                        </Border>
+
+                                        <VerticalStackLayout Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2">
+                                            <Label Text="{Binding Particular}" FontSize="15" FontAttributes="Bold" TextColor="#1E293B" LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding ControlNo, StringFormat='ID: {0}'}" FontSize="10" TextColor="#94A3B8" Margin="0,2,0,0" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Row="1" Grid.Column="2" Text="{Binding Description}" FontSize="14" TextColor="#475569" LineBreakMode="TailTruncation" Margin="0,5" />
+                                        
+                                        <VerticalStackLayout Grid.Row="2" Grid.Column="2" Spacing="4" Margin="0,5,0,0">
+                                            <Label Text="{Binding AuditUser, StringFormat='Captured By: {0}'}" FontSize="12" TextColor="#64748B" />
+                                            <Label Text="{Binding CreatedAt, StringFormat='Captured On: {0:MMM dd, yyyy HH:mm}'}" FontSize="11" TextColor="#94A3B8" />
+                                        </VerticalStackLayout>
+
+                                        <Button Grid.Row="0" Grid.RowSpan="3" Grid.Column="3" 
+                                                Text="Remove" 
+                                                IsVisible="{Binding Source={x:Reference ThisPage}, Path=IsSelectionMode, Converter={StaticResource InvertedBoolConverter}}"
+                                                Clicked="OnDeleteFileClicked" 
+                                                CommandParameter="{Binding .}" 
+                                                BackgroundColor="Transparent" 
+                                                TextColor="#EF4444" 
+                                                FontSize="11" 
+                                                FontAttributes="Bold"
+                                                Padding="0" 
+                                                VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Fixed Professional Sync Action Footer -->
+        <VerticalStackLayout Grid.Row="2" Padding="25,20" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E293B}">
+            <BoxView HeightRequest="1" BackgroundColor="#E2E8F0" Margin="-25,-20, -25, 20" />
+            <Button x:Name="SyncAllButton"
+                    Text="SYNCHRONIZE ALL RECORDS" 
+                    CharacterSpacing="1"
+                    HeightRequest="54"
+                    BackgroundColor="#3D6D6E"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="14"
+                    CornerRadius="8"
+                    Clicked="OnSyncAllClicked">
+                <Button.Shadow>
+                    <Shadow Brush="#3D6D6E" Offset="0,4" Radius="10" Opacity="0.2" />
+                </Button.Shadow>
+            </Button>
+        </VerticalStackLayout>
+
+        <!-- Processing State Overlay -->
+        <Grid Grid.RowSpan="3" x:Name="SyncOverlay" IsVisible="False" BackgroundColor="#B3FFFFFF">
+            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20">
+                <ActivityIndicator IsRunning="True" Color="#3D6D6E" WidthRequest="40" HeightRequest="40" />
+                <Label Text="SYNCHRONIZING..." CharacterSpacing="2" FontAttributes="Bold" TextColor="#3D6D6E" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

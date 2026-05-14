@@ -1,0 +1,1164 @@
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             xmlns:converters="clr-namespace:StateMobile.Converters"
+             xmlns:selectors="clr-namespace:StateMobile.Selectors"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="StateMobile.Views.ChatDetailsView"
+             x:Name="this"
+             BackgroundColor="{AppThemeBinding Light=#F5F6F7, Dark=#0F0F1E}">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <converters:GreaterThanOneConverter x:Key="GreaterThanOneConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+            <selectors:ChatMessageTemplateSelector x:Key="ChatMessageTemplateSelector">
+                <selectors:ChatMessageTemplateSelector.SystemMessageTemplate>
+                    <DataTemplate x:DataType="models:ChatMessage">
+                        <VerticalStackLayout Padding="15,0,15,8" Spacing="0">
+                            <!-- ✅ Date Indicator Header -->
+                            <Label Text="{Binding DateHeaderText}"
+                                   IsVisible="{Binding ShowDateHeader}"
+                                   HorizontalOptions="Center"
+                                   Margin="0,15,0,15"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"/>
+
+                            <Label Text="{Binding MessageText}" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                                   FontSize="13"
+                                   FontAttributes="Italic"
+                                   HorizontalTextAlignment="Center"/>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </selectors:ChatMessageTemplateSelector.SystemMessageTemplate>
+
+                <selectors:ChatMessageTemplateSelector.NormalMessageTemplate>
+                    <DataTemplate x:DataType="models:ChatMessage">
+                        <Grid Padding="15,0,15,12" RowDefinitions="Auto, Auto, Auto"
+                               BackgroundColor="{Binding SelectionIndicatorColor}">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnMessageTapped"/>
+                            </Grid.GestureRecognizers>
+
+                            <!-- ✅ Date Indicator Header -->
+                            <Label Grid.Row="0"
+                                   Text="{Binding DateHeaderText}"
+                                   IsVisible="{Binding ShowDateHeader}"
+                                   HorizontalOptions="Center"
+                                   Margin="0,15,0,15"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"/>
+
+                            <!-- ✅ Wrapper for Bubble and Reactions (Aligns to left or right) -->
+                            <Grid Grid.Row="1"
+                                  HorizontalOptions="{Binding HorizontalOptions}"
+                                  RowDefinitions="Auto"
+                                  ColumnDefinitions="Auto, Auto, Auto">
+
+                                <!-- Avatar (Only for incoming Group messages) -->
+                                <Border Grid.Column="0"
+                                        IsVisible="{Binding IsIncomingGroupMessage}"
+                                        HeightRequest="36" WidthRequest="36"
+                                        VerticalOptions="Start"
+                                        Margin="0,0,10,0"
+                                        StrokeThickness="0"
+                                        ZIndex="2">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="18"/>
+                                    </Border.StrokeShape>
+                                    <Image Source="{Binding SenderImageSource}"
+                                           Aspect="AspectFill"
+                                           HeightRequest="36" WidthRequest="36"/>
+                                </Border>
+
+                                <!-- Forward Button (Shows on left if sent, right if received) -->
+                                <Border Grid.Column="{Binding ForwardColumn}"
+                                        BackgroundColor="Transparent"
+                                        StrokeThickness="0"
+                                        HeightRequest="36" WidthRequest="36"
+                                        VerticalOptions="Center"
+                                        Margin="5,0"
+                                        InputTransparent="False">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnForwardTapped"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="↪" 
+                                           FontSize="22" 
+                                           TextColor="#A4C2C2" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center"/>
+                                </Border>
+
+                                <!-- ✅ Message Bubble -->
+                                <VerticalStackLayout Grid.Column="{Binding BubbleColumn}"
+                                                     Spacing="2">
+                                    
+                                    <!-- Sender Name (Group Chat) -->
+                                    <Label IsVisible="{Binding IsIncomingGroupMessage}"
+                                           Text="{Binding SenderNickname}"
+                                           FontSize="12"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=#4A5568, Dark=#A0AEC0}"
+                                           Margin="2,0,0,1"/>
+
+                                    <Border BackgroundColor="{Binding BubbleColor}"
+                                        StrokeThickness="{Binding BorderWidth}"
+                                        Stroke="{Binding BorderColor}"
+                                        Padding="12,8"
+                                        MaximumWidthRequest="280">
+
+                                    <Border.Behaviors>
+                                        <toolkit:TouchBehavior
+                                            LongPressDuration="500"
+                                            LongPressCommand="{Binding Source={x:Reference this}, Path=BubbleLongPressCommand}"
+                                            LongPressCommandParameter="{Binding .}" />
+                                    </Border.Behaviors>
+
+                                    <Border.GestureRecognizers>
+                                        <PointerGestureRecognizer PointerPressed="OnPointerPressed" PointerReleased="OnPointerReleased" PointerMoved="OnPointerMoved"/>
+                                    </Border.GestureRecognizers>
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="{Binding BubbleCornerRadius}"/>
+                                    </Border.StrokeShape>
+
+                                    <FlyoutBase.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="👍" CommandParameter="👍" Clicked="OnReactionClicked"/>
+                                            <MenuFlyoutItem Text="❤️" CommandParameter="❤️" Clicked="OnReactionClicked"/>
+                                            <MenuFlyoutItem Text="😆" CommandParameter="😆" Clicked="OnReactionClicked"/>
+                                            <MenuFlyoutItem Text="😮" CommandParameter="😮" Clicked="OnReactionClicked"/>
+                                            <MenuFlyoutItem Text="😢" CommandParameter="😢" Clicked="OnReactionClicked"/>
+                                            <MenuFlyoutItem Text="😡" CommandParameter="😡" Clicked="OnReactionClicked"/>
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Text="Forward" Clicked="OnSelectForwardClicked"/>
+                                            <MenuFlyoutItem Text="Reply" Clicked="OnSelectReplyClicked"/>
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Text="Select" Clicked="OnSelectClicked"/>
+                                            <MenuFlyoutItem Text="Delete" Clicked="OnDeleteOneClicked"/>
+                                        </MenuFlyout>
+                                    </FlyoutBase.ContextFlyout>
+
+                                    <!-- Border.Shadow removed for performance -->
+
+                                    <VerticalStackLayout Spacing="4">
+                                        <!-- Forwarded Indicator -->
+                                        <Label IsVisible="{Binding IsForwarded}"
+                                               Text="{Binding ForwardedLabel}"
+                                               FontSize="11"
+                                               FontAttributes="Italic"
+                                               TextColor="{AppThemeBinding Light=#5B9A9A, Dark=#A4C2C2}"
+                                               Margin="0,0,0,2"/>
+
+                                        <!-- Reply Quote -->
+                                        <Border IsVisible="{Binding IsReply}"
+                                                BackgroundColor="#F3F4F6"
+                                                StrokeThickness="0"
+                                                Padding="8,6"
+                                                Margin="0,0,0,4">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="6"/>
+                                            </Border.StrokeShape>
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label Text="{Binding ParentSenderName}" 
+                                                       FontSize="11" 
+                                                       FontAttributes="Bold" 
+                                                       TextColor="#3B7A7A"
+                                                       LineBreakMode="TailTruncation"/>
+                                                <Label Text="{Binding ParentMessageText}" 
+                                                       FontSize="11" 
+                                                       TextColor="#6B7280"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="1"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+
+                                        <!-- Image Preview / Placeholder -->
+                                        <Grid IsVisible="{Binding IsImageMessage}"
+                                              Margin="0,0,0,4">
+                                            <Image Source="{Binding ImagePreview}"
+                                                   IsVisible="{Binding HasImagePreview}"
+                                                   MaximumWidthRequest="250"
+                                                   MaximumHeightRequest="200"
+                                                   Aspect="AspectFit">
+                                                <Image.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnAttachmentTapped"/>
+                                                </Image.GestureRecognizers>
+                                            </Image>
+
+                                            <Border IsVisible="{Binding HasImagePreview, Converter={StaticResource InvertedBoolConverter}}"
+                                                    BackgroundColor="#F3F4F6"
+                                                    StrokeThickness="0"
+                                                    Padding="12,10">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="8"/>
+                                                </Border.StrokeShape>
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnAttachmentTapped"/>
+                                                </Border.GestureRecognizers>
+                                                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                                    <Label Text="🖼️" FontSize="18" VerticalOptions="Center"/>
+                                                    <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                                                        <Label Text="{Binding DisplayFileName}"
+                                                               FontSize="13"
+                                                               TextColor="#374151"
+                                                               FontAttributes="Bold"
+                                                               LineBreakMode="TailTruncation"
+                                                               MaximumWidthRequest="180"/>
+                                                        <Label Text="Tap to view"
+                                                               FontSize="10"
+                                                               TextColor="#9CA3AF"/>
+                                                    </VerticalStackLayout>
+                                                </HorizontalStackLayout>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- File Attachment -->
+                                        <Border IsVisible="{Binding IsFileMessage}"
+                                                BackgroundColor="#F3F4F6"
+                                                StrokeThickness="0"
+                                                Padding="10,8"
+                                                Margin="0,0,0,4">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="8"/>
+                                            </Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnAttachmentTapped"/>
+                                            </Border.GestureRecognizers>
+                                            <HorizontalStackLayout Spacing="8">
+                                                <Label Text="📎" FontSize="18" VerticalOptions="Center"/>
+                                                <VerticalStackLayout VerticalOptions="Center">
+                                                    <Label Text="{Binding DisplayFileName}" 
+                                                           FontSize="13"
+                                                           TextColor="#374151"
+                                                           FontAttributes="Bold"
+                                                           LineBreakMode="TailTruncation"
+                                                           MaximumWidthRequest="180"/>
+                                                    <Label Text="Tap to open" 
+                                                           FontSize="10"
+                                                           TextColor="#9CA3AF"/>
+                                                </VerticalStackLayout>
+                                            </HorizontalStackLayout>
+                                        </Border>
+
+                                         <!-- Message Text -->
+                                         <Label Text="{Binding DisplayMessageText}" 
+                                                IsVisible="{Binding IsTextMessage}"
+                                                TextColor="{Binding BubbleTextColor}" 
+                                                FontSize="14"
+                                                LineHeight="1.2"
+                                                LineBreakMode="WordWrap"/>
+                                         
+
+                                        <!-- Timestamp -->
+                                        <Label Text="{Binding Timestamp, StringFormat='{0:h:mm tt}'}" 
+                                               FontSize="9" 
+                                               TextColor="{Binding BubbleTextColor}" 
+                                               Opacity="0.5" 
+                                               HorizontalOptions="End"
+                                               Margin="0,2,0,0"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                                </VerticalStackLayout>
+
+                                <!-- ✅ Reaction overlay at "inner" corner of bubble column -->
+                                <HorizontalStackLayout Grid.Row="0"
+                                                       Grid.Column="{Binding BubbleColumn}"
+                                                       IsVisible="{Binding HasReactions}"
+                                                       HorizontalOptions="{Binding ReactionHorizontalOptions}"
+                                                       VerticalOptions="End"
+                                                       Margin="{Binding ReactionMargin}"
+                                                       ZIndex="10"
+                                                       BindableLayout.ItemsSource="{Binding GroupedReactions}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="models:ChatMessage+GroupedReaction">
+                                            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#2D3748}"
+                                                    StrokeThickness="1"
+                                                    Stroke="{AppThemeBinding Light=#E5E7EB, Dark=#4A5568}"
+                                                    Padding="4,2"
+                                                    Margin="2,0"
+                                                    HeightRequest="26">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="13"/>
+                                                </Border.StrokeShape>
+                                                <Border.Shadow>
+                                                    <Shadow Opacity="0"/>
+                                                </Border.Shadow>
+                                                <HorizontalStackLayout Spacing="2" VerticalOptions="Center">
+                                                    <Label Text="{Binding ReactionType}" FontSize="12" VerticalOptions="Center"/>
+                                                    <Label Text="{Binding Count}" 
+                                                           FontSize="10" 
+                                                           TextColor="#374151" 
+                                                           IsVisible="{Binding Count, Converter={StaticResource GreaterThanOneConverter}}"
+                                                           VerticalOptions="Center"
+                                                           Margin="0,0,2,0"/>
+                                                </HorizontalStackLayout>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+                            </Grid>
+
+                            <!-- ✅ Status Indicator (sending.../sent/seen) -->
+                            <Label Grid.Row="2"
+                                   Text="{Binding StatusText}" 
+                                   IsVisible="{Binding IsStatusVisible}"
+                                   HorizontalOptions="End"
+                                   Margin="0,12,2,8"
+                                   FontSize="11" 
+                                   TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"/>
+                        </Grid>
+                    </DataTemplate>
+                </selectors:ChatMessageTemplateSelector.NormalMessageTemplate>
+            </selectors:ChatMessageTemplateSelector>
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <Grid RowDefinitions="Auto, Auto, *, Auto">
+        <!-- ✅ Vibrant Professional Header -->
+        <Border Grid.Row="0" 
+                BackgroundColor="#3B7A7A" 
+                StrokeThickness="0"
+                Padding="0">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,2" Radius="10" Opacity="0.1"/>
+            </Border.Shadow>
+
+            <Grid ColumnDefinitions="Auto, *, Auto, Auto" 
+                  Padding="12,8"
+                  ColumnSpacing="8">
+
+                <!-- Minimalist Back Button -->
+                <Border Grid.Column="0" 
+                        x:Name="backButton"
+                        BackgroundColor="Transparent"
+                        StrokeThickness="0"
+                        HeightRequest="32"
+                        WidthRequest="32"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding Source={x:Reference this}, Path=ShowBackButton}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped"/>
+                    </Border.GestureRecognizers>
+
+                    <Path Data="M15,19l-7-7 7-7" 
+                          Stroke="White" 
+                          StrokeThickness="2" 
+                          StrokeLineCap="Round"
+                          StrokeLineJoin="Round"
+                          Aspect="Uniform" 
+                          HorizontalOptions="Center" 
+                          VerticalOptions="Center"
+                          HeightRequest="16" WidthRequest="16"/>
+                </Border>
+
+                <!-- Avatar & Name Section -->
+                <Grid Grid.Column="1" 
+                      ColumnDefinitions="Auto, *" 
+                      ColumnSpacing="10" 
+                      VerticalOptions="Center">
+
+                    <!-- Professional Avatar (More Compact) -->
+                    <Border Grid.Column="0"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="1"
+                            Stroke="White"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
+
+                        <Image x:Name="imgChatPartnerPhoto"
+                               Source="user_avatar_placeholder.png"
+                               Aspect="AspectFill"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Fill"/>
+                    </Border>
+
+                    <!-- Name & Status (Smaller Text) -->
+                    <VerticalStackLayout Grid.Column="1" 
+                                         Spacing="-1" 
+                                         VerticalOptions="Center">
+                         <Label x:Name="lblChatPartnerName" 
+                                Text="Select a chat" 
+                                FontAttributes="Bold" 
+                                FontSize="14"
+                                TextColor="White"
+                                LineBreakMode="TailTruncation" 
+                                MaxLines="1"/>
+
+                         <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                             <Ellipse x:Name="statusDot"
+                                      WidthRequest="6" 
+                                      HeightRequest="6" 
+                                      Fill="#9CA3AF"
+                                      VerticalOptions="Center"/>
+                             <Label x:Name="lblStatus"
+                                    Text="Offline" 
+                                    FontSize="10" 
+                                    TextColor="White"
+                                    Opacity="0.8"
+                                    VerticalOptions="Center"/>
+                         </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Action Icons (Settings/More) -->
+                <Border Grid.Column="2"
+                        x:Name="btnGroupSettings"
+                        BackgroundColor="Transparent"
+                        StrokeThickness="0"
+                        HeightRequest="32"
+                        WidthRequest="32"
+                        VerticalOptions="Center"
+                        IsVisible="False">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSettingsTapped"/>
+                    </Border.GestureRecognizers>
+                    <Path Data="M12,16A2,2 0 0,1 10,14A2,2 0 0,1 12,12A2,2 0 0,1 14,14A2,2 0 0,1 12,16M12,10A2,2 0 0,1 10,8A2,2 0 0,1 12,6A2,2 0 0,1 14,8A2,2 0 0,1 12,10M12,22A2,2 0 0,1 10,20A2,2 0 0,1 12,18A2,2 0 0,1 14,20A2,2 0 0,1 12,22Z"
+                          Fill="White"
+                          Aspect="Uniform"
+                          HeightRequest="18" WidthRequest="18"
+                          HorizontalOptions="Center" VerticalOptions="Center"/>
+                </Border>
+
+                <!-- Search Toggle Icon -->
+                <Border Grid.Column="3"
+                        BackgroundColor="Transparent"
+                        StrokeThickness="0"
+                        HeightRequest="32"
+                        WidthRequest="32"
+                        VerticalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSearchToggleTapped"/>
+                    </Border.GestureRecognizers>
+                    <Path Data="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"
+                          Fill="White"
+                          Aspect="Uniform"
+                          HeightRequest="18" WidthRequest="18"
+                          HorizontalOptions="Center" VerticalOptions="Center"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ✅ Search Bar (Hidden by default) -->
+         <Border Grid.Row="1"
+                x:Name="searchBarContainer"
+                IsVisible="False"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#151525}"
+                StrokeThickness="0"
+                Padding="12,8">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,2" Radius="4" Opacity="0.05"/>
+            </Border.Shadow>
+            <Grid ColumnDefinitions="*, Auto, Auto, Auto" ColumnSpacing="8">
+                <Border BackgroundColor="#F0F2F5"
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20"/>
+                    </Border.StrokeShape>
+                    <Entry x:Name="searchEntry"
+                           Placeholder="Search messages..."
+                           PlaceholderColor="{AppThemeBinding Light=#9CA3AF, Dark=#8888AA}"
+                           BackgroundColor="Transparent"
+                           TextColor="{AppThemeBinding Light=#111827, Dark=White}"
+                           FontSize="14"
+                           HeightRequest="38"
+                           Margin="14,0"
+                           TextChanged="OnSearchTextChanged"/>
+                </Border>
+
+                <!-- Loading indicator -->
+                <ActivityIndicator Grid.Column="1"
+                                  IsRunning="{Binding IsSearching}"
+                                  IsVisible="{Binding IsSearching}"
+                                  Color="#A4C2C2"
+                                  HeightRequest="18"
+                                  WidthRequest="18"
+                                  VerticalOptions="Center"/>
+
+                <!-- Navigate between results -->
+                <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                    <Label x:Name="lblSearchCount" 
+                           Text="" 
+                           FontSize="12" 
+                           TextColor="#6B7280"
+                           VerticalOptions="Center"/>
+                    <Border BackgroundColor="#F0F2F5" 
+                            HeightRequest="30" WidthRequest="30"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSearchPrevTapped"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="▲" FontSize="12" TextColor="#374151"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <Border BackgroundColor="#F0F2F5" 
+                            HeightRequest="30" WidthRequest="30"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSearchNextTapped"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="▼" FontSize="12" TextColor="#374151"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                </HorizontalStackLayout>
+
+                <!-- Close search -->
+                <Border Grid.Column="3" 
+                        BackgroundColor="#F0F2F5"
+                        HeightRequest="30" WidthRequest="30"
+                        StrokeThickness="0"
+                        VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15"/>
+                    </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSearchCloseTapped"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="✕" FontSize="14" TextColor="#374151"
+                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ✅ Selection Bar (Visible only during selection mode) -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding IsSelectionMode}"
+                BackgroundColor="#336363"
+                StrokeThickness="0"
+                Padding="15,10">
+            <Grid ColumnDefinitions="Auto, *, Auto">
+                <HorizontalStackLayout Spacing="15" VerticalOptions="Center">
+                    <Border BackgroundColor="Transparent" 
+                            StrokeThickness="0"
+                            HeightRequest="30" WidthRequest="30">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCancelSelectionTapped"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="✕" TextColor="White" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <Label Text="{Binding SelectedCountText}" TextColor="White" VerticalOptions="Center" FontAttributes="Bold"/>
+                </HorizontalStackLayout>
+                
+                <Border Grid.Column="2" 
+                        BackgroundColor="Transparent"
+                        StrokeThickness="0"
+                        Padding="10,5">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnDeleteSelectedTapped"/>
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout Spacing="8">
+                        <Image Source="trash.png" HeightRequest="18" WidthRequest="18" VerticalOptions="Center"/>
+                        <Label Text="Delete" TextColor="White" VerticalOptions="Center" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ✅ Message List -->
+        <CollectionView Grid.Row="2" 
+                        x:Name="messagesCollectionView"
+                        ItemsSource="{Binding Messages}"
+                        ItemTemplate="{StaticResource ChatMessageTemplateSelector}"
+                        ItemsUpdatingScrollMode="KeepLastItemInView"
+                        Scrolled="OnMessagesScrolled"
+                        Margin="0,10,0,10"
+                        InputTransparent="False">
+
+            <CollectionView.Header>
+                <Grid Padding="0,0,0,6"
+                      IsVisible="{Binding IsLoadingOlderMessages}">
+                    <HorizontalStackLayout HorizontalOptions="Center"
+                                           Spacing="8"
+                                            Padding="12,6"
+                                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A2E}">
+                        <ActivityIndicator IsRunning="True"
+                                           Color="#A4C2C2"
+                                           HeightRequest="18"
+                                           WidthRequest="18"
+                                           VerticalOptions="Center"/>
+                        <Label Text="Loading older messages"
+                               FontSize="12"
+                               TextColor="#6B7280"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Grid>
+            </CollectionView.Header>
+
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+        </CollectionView>
+
+        <!-- ✅ Busy Loading Overlay (for actions like delete/archive) -->
+        <Grid Grid.Row="0" Grid.RowSpan="4"
+              IsVisible="{Binding IsBusy}"
+              BackgroundColor="#4D000000"
+              ZIndex="2000"
+              InputTransparent="False">
+            <Border BackgroundColor="White" 
+                    HeightRequest="80" WidthRequest="80" 
+                    HorizontalOptions="Center" VerticalOptions="Center">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+                <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                                   Color="#A4C2C2" 
+                                   HeightRequest="40" WidthRequest="40" 
+                                   VerticalOptions="Center" HorizontalOptions="Center"/>
+            </Border>
+        </Grid>
+
+        <!-- ✅ Skeleton Loading Overlay -->
+         <Grid Grid.Row="2"
+              IsVisible="{Binding IsLoadingMessages}"
+              BackgroundColor="{AppThemeBinding Light=#F5F6F7, Dark=#0F0F1E}"
+              ZIndex="999"
+              InputTransparent="False">
+            <ContentView ControlTemplate="{StaticResource ChatMessageSkeletonTemplate}" />
+        </Grid>
+        
+        <!-- ✅ Empty State Overlay -->
+         <Grid Grid.Row="2"
+              x:Name="emptyStateContainer"
+              BackgroundColor="{AppThemeBinding Light=#F5F6F7, Dark=#0F0F1E}"
+              IsVisible="True"
+              ZIndex="5">
+            <VerticalStackLayout VerticalOptions="Center" 
+                                 HorizontalOptions="Center"
+                                 Spacing="12">
+                <!-- Chat bubble icon -->
+                <Border BackgroundColor="#E8F0F0"
+                        StrokeThickness="2"
+                        Stroke="#3B7A7A"
+                        HeightRequest="70"
+                        WidthRequest="70"
+                        HorizontalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16"/>
+                    </Border.StrokeShape>
+                    <Label Text="💬" 
+                           FontSize="32"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                </Border>
+                 <Label x:Name="lblEmptyStateTitle"
+                        Text="{Binding EmptyStateTitle}"
+                        TextColor="{AppThemeBinding Light=#1E3A3A, Dark=White}"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"/>
+                <Label x:Name="lblEmptyStateSubtitle"
+                       Text="{Binding EmptyStateSubtitle}"
+                       TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#888899}"
+                       FontSize="14"
+                       HorizontalOptions="Center"/>
+                  <Label Text="{Binding ChatLoadStatusMessage}"
+                      IsVisible="{Binding ShowChatLoadStatusMessage}"
+                      TextColor="#B45309"
+                      FontSize="13"
+                      HorizontalOptions="Center"
+                      HorizontalTextAlignment="Center"
+                      MaxLines="3"
+                      Margin="18,4,18,0"/>
+
+                <Border BackgroundColor="#3B7A7A"
+                        StrokeThickness="0"
+                        Padding="16,10"
+                        Margin="0,6,0,0"
+                        IsVisible="{Binding ShowChatLoadStatusMessage}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnRetryLoadMessagesTapped"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="Retry"
+                           TextColor="White"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                </Border>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- ✅ Input Section — Messenger-Style Dynamic Bar -->
+        <Border Grid.Row="3" 
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A2E}" 
+                StrokeThickness="0"
+                Padding="8,8">
+
+            <VerticalStackLayout Spacing="6">
+                <!-- Reply Preview -->
+                <Border x:Name="replyPreview" IsVisible="False" 
+                        BackgroundColor="{AppThemeBinding Light=#F9FAFB, Dark=#2A2A4A}" 
+                        StrokeThickness="0" 
+                        Margin="0,0,0,4"
+                        Padding="12,10">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Spacing="2">
+                            <Label x:Name="lblReplySender" Text="Replying to Name" 
+                                   FontSize="12" FontAttributes="Bold" 
+                                   TextColor="{AppThemeBinding Light=#5B8DEF, Dark=#6C9BF2}" />
+                            <Label x:Name="lblReplyText" Text="Original message text goes here..." 
+                                   FontSize="12" 
+                                   TextColor="{AppThemeBinding Light=#4B5563, Dark=#8888AA}" 
+                                   LineBreakMode="TailTruncation" MaxLines="1" />
+                        </VerticalStackLayout>
+                        <Border Grid.Column="1" 
+                                BackgroundColor="Transparent" 
+                                StrokeThickness="0"
+                                HeightRequest="26" WidthRequest="26"
+                                VerticalOptions="Start">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCancelReplyTapped"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="✕" FontSize="16" TextColor="#9CA3AF" 
+                                   HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Attachment Preview Bar -->
+                <ScrollView x:Name="attachmentPreviewBar"                             Orientation="Horizontal" 
+                            IsVisible="False" 
+                            HeightRequest="85" 
+                            Margin="0,0,0,4"
+                            VerticalOptions="Start">
+                    <HorizontalStackLayout x:Name="stackAttachments" 
+                                           Spacing="10" 
+                                           Padding="4"/>
+                </ScrollView>
+
+                <!-- ✅ Main Input Row: Icons + Message + Actions -->
+                <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto, Auto" 
+                      ColumnSpacing="6"
+                      VerticalOptions="Center"
+                      MinimumHeightRequest="44">
+
+                    <!-- ➕ Attach File / CamScanner -->
+                    <Border Grid.Column="0"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnAttachClicked"/>
+                        </Border.GestureRecognizers>
+                        <Image Source="plus_icon.png"
+                               HeightRequest="22" WidthRequest="22"
+                               HorizontalOptions="Center" VerticalOptions="Center">
+                            <Image.Behaviors>
+                                <toolkit:IconTintColorBehavior TintColor="#A4C2C2" />
+                            </Image.Behaviors>
+                        </Image>
+                    </Border>
+
+                    <!-- 📷 Camera (Capture Photo) -->
+                    <Border Grid.Column="1"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCameraTapped"/>
+                        </Border.GestureRecognizers>
+                        <Path Data="M12,17.5C14.33,17.5 16.31,16.04 17.11,14H6.89C7.69,16.04 9.67,17.5 12,17.5M12,9C9.79,9 8,10.79 8,13C8,15.21 9.79,17 12,17C14.21,17 16,15.21 16,13C16,10.79 14.21,9 12,9M20,4H16.83L15,2H9L7.17,4H4C2.9,4 2,4.9 2,6V18C2,19.1 2.9,20 4,20H20C21.1,20 22,19.1 22,18V6C22,4.9 21.1,4 20,4Z"
+                               Fill="#A4C2C2"
+                               Aspect="Uniform"
+                               HeightRequest="22" WidthRequest="22"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+
+                    <!-- 🖼️ Gallery (Pick Photo) -->
+                    <Border Grid.Column="2"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnGalleryTapped"/>
+                        </Border.GestureRecognizers>
+                        <Path Data="M21,19V5C21,3.9 20.1,3 19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19M8.5,13.5L11,16.51L14.5,12L19,18H5L8.5,13.5Z" 
+                               Fill="#A4C2C2"
+                               Aspect="Uniform"
+                               HeightRequest="22" WidthRequest="22" 
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+
+                    <!-- 💬 Message Input Field (Dynamic rounded) -->
+                    <Border Grid.Column="3"
+                            BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#2A2A4A}"
+                            StrokeThickness="0"
+                            VerticalOptions="Center"
+                            HorizontalOptions="Fill"
+                            MinimumHeightRequest="40">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20"/>
+                        </Border.StrokeShape>
+                        <Entry x:Name="txtMessage"
+                               Placeholder="Message" 
+                               PlaceholderColor="{AppThemeBinding Light=#6B7280, Dark=#8888AA}"
+                               BackgroundColor="Transparent"
+                               TextColor="{AppThemeBinding Light=#111827, Dark=White}"
+                               FontSize="15"
+                               VerticalOptions="Center"
+                               HeightRequest="40"
+                               Margin="16,0,8,0"
+                               Focused="OnMessageFocused"
+                               TextChanged="OnMessageTextChanged"/>
+                    </Border>
+
+                    <!-- 😊 Emoji Button -->
+                    <Border Grid.Column="4"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnEmojiTapped"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="😊" FontSize="22"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+
+                    <!-- Send Button (Visible only when typing) -->
+                    <Border Grid.Column="5"
+                            x:Name="sendButton"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            VerticalOptions="Center"
+                            IsVisible="False">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSendOrLikeTapped"/>
+                        </Border.GestureRecognizers>
+                        <Image Source="send_arrow.png"
+                               HeightRequest="20" WidthRequest="20"
+                               HorizontalOptions="Center" VerticalOptions="Center">
+                            <Image.Behaviors>
+                                <toolkit:IconTintColorBehavior TintColor="#A4C2C2" />
+                            </Image.Behaviors>
+                        </Image>
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- ✅ Image Viewer Overlay (In-App) -->
+        <Grid Grid.Row="0" Grid.RowSpan="4"
+              x:Name="imageViewerOverlay"
+              IsVisible="False"
+              Opacity="0"   
+              BackgroundColor="#F2000000"
+              ZIndex="1001">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnCloseImageViewerTapped"/>
+            </Grid.GestureRecognizers>
+            
+            <Image x:Name="imgFullView"
+                   Aspect="AspectFit"
+                   HorizontalOptions="Fill"
+                   VerticalOptions="Fill"
+                   Margin="10" />
+            
+            <Border BackgroundColor="#66000000"
+                    HeightRequest="40"
+                    WidthRequest="40"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="25"
+                    Padding="0"
+                    StrokeThickness="0"
+                    ZIndex="1002">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="20"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCloseImageViewerTapped"/>
+                </Border.GestureRecognizers>
+                <Label Text="✕" 
+                       TextColor="White" 
+                       FontSize="20" 
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" 
+                       VerticalOptions="Center"/>
+            </Border>
+        </Grid>
+
+        <!-- ✅ Forward Message Overlay -->
+        <Grid Grid.Row="0" Grid.RowSpan="4"
+              x:Name="forwardOverlay"
+              IsVisible="False"
+              Opacity="0"
+              BackgroundColor="#80000000"
+              ZIndex="1005"
+              InputTransparent="False">
+
+            <Border BackgroundColor="White"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    Margin="20"
+                    Padding="0"
+                    WidthRequest="320"
+                    HeightRequest="520">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+
+                <Grid RowDefinitions="Auto, Auto, *, Auto">
+                    <!-- Header -->
+                    <Grid Grid.Row="0" Padding="15" ColumnDefinitions="*, Auto">
+                        <Label Text="Forward messages to" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="#374151"
+                               VerticalOptions="Center"/>
+                        <Border Grid.Column="1" 
+                                BackgroundColor="Transparent" 
+                                StrokeThickness="0"
+                                HeightRequest="30" WidthRequest="30">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCloseForwardTapped"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="✕" FontSize="20" TextColor="#9CA3AF" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Grid>
+
+                    <BoxView Grid.Row="0" VerticalOptions="End" HeightRequest="1" Color="#E5E7EB"/>
+
+                    <!-- Search Bar -->
+                    <Border Grid.Row="1" Margin="15,10" Padding="10,0" BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="#E5E7EB">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20"/>
+                        </Border.StrokeShape>
+                        <Entry x:Name="forwardSearchEntry" 
+                               Placeholder="Search..." 
+                               TextChanged="OnForwardSearchTextChanged"
+                               HeightRequest="40"
+                               FontSize="14"/>
+                    </Border>
+
+                    <!-- List -->
+                    <Grid Grid.Row="2">
+                        <CollectionView x:Name="forwardCollection"
+                                        SelectionMode="None">
+                            <CollectionView.IsGrouped>True</CollectionView.IsGrouped>
+
+                            <CollectionView.GroupHeaderTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding Name}" 
+                                           Padding="15,10,15,5" 
+                                           FontSize="13" 
+                                           FontAttributes="Bold" 
+                                           TextColor="#6B7280" 
+                                           BackgroundColor="#F9FAFB"/>
+                                </DataTemplate>
+                            </CollectionView.GroupHeaderTemplate>
+
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:ChatRoomModel">
+                                    <Grid Padding="15,10" ColumnDefinitions="Auto, *, Auto" BackgroundColor="White">
+                                        <Border HeightRequest="40" WidthRequest="40" BackgroundColor="#E5E7EB">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="20"/>
+                                            </Border.StrokeShape>
+                                            <Image Source="{Binding DisplayImageSource, TargetNullValue='user_avatar_placeholder.png', FallbackValue='user_avatar_placeholder.png'}" 
+                                                   Aspect="AspectFill" />
+                                        </Border>
+
+                                        <VerticalStackLayout Grid.Column="1" Margin="12,0" VerticalOptions="Center">
+                                            <Label Text="{Binding DisplayName}" FontSize="15" FontAttributes="Bold" TextColor="#111827" />
+                                            <Label Text="{Binding StatusText}" FontSize="12" TextColor="#6B7280"/>
+                                        </VerticalStackLayout>
+
+                                        <Border Grid.Column="2" 
+                                                HeightRequest="24" WidthRequest="24" 
+                                                StrokeThickness="2" 
+                                                Stroke="#D1D5DB"
+                                                VerticalOptions="Center">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="12"/>
+                                            </Border.StrokeShape>
+                                            <Ellipse Fill="#A4C2C2" 
+                                                     HeightRequest="14" 
+                                                     WidthRequest="14" 
+                                                     HorizontalOptions="Center" 
+                                                     VerticalOptions="Center" 
+                                                     IsVisible="{Binding IsSelected}"/>
+                                            
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Stroke" Value="#A4C2C2" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                        </Border>
+
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnSelectForwardRecipientTapped"/>
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <ActivityIndicator IsRunning="{Binding IsLoadingForwardRecipients, Source={x:Reference this}}"
+                                           IsVisible="{Binding IsLoadingForwardRecipients, Source={x:Reference this}}"
+                                           Color="#A4C2C2"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="Center"
+                                           HeightRequest="50"
+                                           WidthRequest="50"/>
+                    </Grid>
+
+                    <!-- Bottom Action -->
+                    <Grid Grid.Row="3" Padding="15" BackgroundColor="White">
+                        <Button x:Name="btnConfirmForward"
+                                Text="Forward" 
+                                BackgroundColor="#A4C2C2" 
+                                TextColor="White" 
+                                FontAttributes="Bold" 
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                Clicked="OnConfirmForwardClicked"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="floatingMenuOverlay" 
+              Grid.Row="0" Grid.RowSpan="4"
+              IsVisible="False" 
+              Opacity="0"
+              ZIndex="5000"
+              BackgroundColor="#66000000">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnCloseFloatingMenuTapped"/>
+            </Grid.GestureRecognizers>
+
+            <Border x:Name="floatingMenuContent"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1F1F2F}"
+                    VerticalOptions="Start"
+                    HorizontalOptions="Start"
+                    WidthRequest="220"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E5E7EB, Dark=#3F3F4F}"
+                    Padding="0">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.15"/>
+                </Border.Shadow>
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16"/>
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="0">
+                    <!-- 📦 Horizontal Reaction Row -->
+                    <Grid ColumnDefinitions="*, *, *, *, *, *" Padding="10,12,10,8">
+                        <Label Grid.Column="0" Text="👍" HorizontalOptions="Center" VerticalOptions="Center" FontSize="22">
+                            <Label.GestureRecognizers><TapGestureRecognizer Tapped="OnFloatingReactionClicked" CommandParameter="👍"/></Label.GestureRecognizers>
+                        </Label>
+                        <Label Grid.Column="1" Text="❤️" HorizontalOptions="Center" VerticalOptions="Center" FontSize="22">
+                            <Label.GestureRecognizers><TapGestureRecognizer Tapped="OnFloatingReactionClicked" CommandParameter="❤️"/></Label.GestureRecognizers>
+                        </Label>
+                        <Label Grid.Column="2" Text="😆" HorizontalOptions="Center" VerticalOptions="Center" FontSize="22">
+                            <Label.GestureRecognizers><TapGestureRecognizer Tapped="OnFloatingReactionClicked" CommandParameter="😆"/></Label.GestureRecognizers>
+                        </Label>
+                        <Label Grid.Column="3" Text="😮" HorizontalOptions="Center" VerticalOptions="Center" FontSize="22">
+                            <Label.GestureRecognizers><TapGestureRecognizer Tapped="OnFloatingReactionClicked" CommandParameter="😮"/></Label.GestureRecognizers>
+                        </Label>
+                        <Label Grid.Column="4" Text="😢" HorizontalOptions="Center" VerticalOptions="Center" FontSize="22">
+                            <Label.GestureRecognizers><TapGestureRecognizer Tapped="OnFloatingReactionClicked" CommandParameter="😢"/></Label.GestureRecognizers>
+                        </Label>
+                        <Label Grid.Column="5" Text="😡" HorizontalOptions="Center" VerticalOptions="Center" FontSize="22">
+                            <Label.GestureRecognizers><TapGestureRecognizer Tapped="OnFloatingReactionClicked" CommandParameter="😡"/></Label.GestureRecognizers>
+                        </Label>
+                    </Grid>
+
+                    <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#F3F4F6, Dark=#2D2D3D}" Margin="12,4"/>
+
+                    <!-- 📜 Vertical Action Menu -->
+                    <VerticalStackLayout Spacing="0" Padding="0,4,0,8">
+                        <!-- Reply Action -->
+                        <Grid Padding="20,10" BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFloatingActionTapped" CommandParameter="Reply"/>
+                            </Grid.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="12">
+                                <Label Text="Reply" FontSize="15" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#374151, Dark=#E5E7EB}"/>
+                            </HorizontalStackLayout>
+                        </Grid>
+
+                        <!-- Forward Action -->
+                        <Grid Padding="20,10" BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFloatingActionTapped" CommandParameter="Forward"/>
+                            </Grid.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="12">
+                                <Label Text="Forward" FontSize="15" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#374151, Dark=#E5E7EB}"/>
+                            </HorizontalStackLayout>
+                        </Grid>
+
+                        <!-- Select Action -->
+                        <Grid Padding="20,10" BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFloatingActionTapped" CommandParameter="Select"/>
+                            </Grid.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="12">
+                                <Label Text="Select" FontSize="15" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#374151, Dark=#E5E7EB}"/>
+                            </HorizontalStackLayout>
+                        </Grid>
+
+                        <!-- Delete Action -->
+                        <Grid Padding="20,10" BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFloatingActionTapped" CommandParameter="Delete"/>
+                            </Grid.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="12">
+                                <Label x:Name="lblFloatingDeleteAction" Text="Delete" FontSize="15" VerticalOptions="Center" TextColor="#EF4444"/>
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentView>

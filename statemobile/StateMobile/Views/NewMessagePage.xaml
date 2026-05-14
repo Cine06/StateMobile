@@ -1,0 +1,175 @@
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:StateMobile.Views"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             xmlns:converters="clr-namespace:StateMobile.Converters"
+             x:Class="StateMobile.Views.NewMessagePage"
+             NavigationPage.HasNavigationBar="True"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#0F0F1E}"
+             Title="New Message">
+
+    <views:BasePage.Resources>
+        <ResourceDictionary>
+            <converters:Base64ImageConverter x:Key="Base64Converter" />
+            <converters:SelectionColorConverter x:Key="SelectionColorConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </views:BasePage.Resources>
+
+    <Grid RowDefinitions="Auto, Auto, *">
+        <!-- Header Overlay for Selection Mode -->
+        <Border Grid.Row="0" 
+                IsVisible="{Binding IsSelectionMode}"
+                BackgroundColor="#498789" 
+                HeightRequest="60" 
+                ZIndex="10"
+                VerticalOptions="Start">
+            <Grid ColumnDefinitions="Auto, *, Auto" Padding="15,0">
+                <Button Text="Cancel" 
+                        Clicked="OnCancelSelectionClicked" 
+                        BackgroundColor="Transparent" 
+                        TextColor="White" 
+                        FontAttributes="Bold"
+                        Padding="0"/>
+                
+                <Label Grid.Column="1"
+                       Text="{Binding SelectionText}" 
+                       TextColor="White" 
+                       VerticalOptions="Center" 
+                       HorizontalOptions="Center"
+                       FontAttributes="Bold"/>
+                
+                <Button Grid.Column="2" 
+                        Text="Create" 
+                        Clicked="OnCreateGroupClicked" 
+                        IsVisible="{Binding HasSelection}"
+                        BackgroundColor="White" 
+                        TextColor="#A4C2C2" 
+                        CornerRadius="20" 
+                        HeightRequest="35" 
+                        Padding="15,0"/>
+            </Grid>
+        </Border>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="0">
+            <!-- Search Bar -->
+            <Border Margin="15,15,15,10" StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=#F0F2F5, Dark=#2A2A3E}">
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    <Image Source="search_icon_gray.png" HeightRequest="18" Margin="15,0,5,0" VerticalOptions="Center"/>
+                    <Entry x:Name="searchEntry"
+                           Grid.Column="1"
+                           Placeholder="Search for users..."
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                           PlaceholderColor="{AppThemeBinding Light=Gray, Dark=#A0AEC0}"
+                           TextChanged="OnSearchTextChanged"
+                           FontSize="15"
+                           HeightRequest="45"
+                           VerticalOptions="Center"/>
+                    <ActivityIndicator Grid.Column="2" 
+                                      IsRunning="{Binding IsSearching}" 
+                                      IsVisible="{Binding IsSearching}" 
+                                      Color="#A4C2C2" 
+                                      HeightRequest="20" 
+                                      WidthRequest="20" 
+                                      Margin="0,0,15,0" 
+                                      VerticalOptions="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- New Group Button Row (Visible only when NOT selecting) -->
+            <Grid Padding="20,10" ColumnDefinitions="Auto, *" IsVisible="{Binding IsSelectionMode, Converter={StaticResource InvertedBoolConverter}}">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnNewGroupClicked"/>
+                </Grid.GestureRecognizers>
+                <Border WidthRequest="50" HeightRequest="50" BackgroundColor="{AppThemeBinding Light=#E0F2F2, Dark=#263B3B}" StrokeShape="RoundRectangle 25" StrokeThickness="0">
+                    <Image Source="group_add_icon.png" HeightRequest="25" WidthRequest="25" VerticalOptions="Center" HorizontalOptions="Center"/>
+                </Border>
+                <Label Grid.Column="1" Text="New Group" VerticalOptions="Center" Margin="15,0,0,0" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#498789, Dark=#A4C2C2}"/>
+            </Grid>
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="2"
+                ItemsSource="{Binding Users}"
+                SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:User">
+                    <Grid Padding="20,12" ColumnDefinitions="Auto, *, Auto" BackgroundColor="Transparent">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnUserTapped" CommandParameter="{Binding .}"/>
+                        </Grid.GestureRecognizers>
+
+                        <Border Grid.Column="0" 
+                                BackgroundColor="{AppThemeBinding Light=#D1E7E7, Dark=#2A4444}"
+                                StrokeThickness="0"
+                                HeightRequest="50" 
+                                WidthRequest="50"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Center">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="25"/>
+                            </Border.StrokeShape>
+
+                            <Image Source="{Binding Photo, Converter={StaticResource Base64Converter}}" 
+                                   Aspect="AspectFill"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill"
+                                   IsAnimationPlaying="False"/>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" 
+                                      VerticalOptions="Center" 
+                                      Margin="15,0,0,0"
+                                      Spacing="2">
+                            <Label Text="{Binding FullName}" 
+                            FontAttributes="Bold" 
+                            FontSize="16" 
+                            TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                            <Label Text="{Binding DepartmentName}" 
+                            FontSize="13" 
+                            TextColor="{AppThemeBinding Light=Gray, Dark=#A0AEC0}"/>
+                        </VerticalStackLayout>
+
+                        <!-- Selection Indicator (Visible only in selection mode) -->
+                        <Border Grid.Column="2"
+                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type views:NewMessagePage}}, Path=IsSelectionMode}"
+                                HeightRequest="22"
+                                WidthRequest="22"
+                                StrokeShape="RoundRectangle 11"
+                                StrokeThickness="1"
+                                Stroke="#A4C2C2"
+                                BackgroundColor="{Binding IsSelected, Converter={StaticResource SelectionColorConverter}}"
+                                VerticalOptions="Center">
+                            <Image Source="check_icon_white.png"
+                                   IsVisible="{Binding IsSelected}"
+                                   HeightRequest="12"
+                                   WidthRequest="12"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- ✅ Full-Page Loading Overlay -->
+        <Grid Grid.Row="0" Grid.RowSpan="3"
+              IsVisible="{Binding IsLoading}"
+              BackgroundColor="#80000000"
+              ZIndex="999"
+              InputTransparent="False">
+            <VerticalStackLayout VerticalOptions="Center" 
+                                 HorizontalOptions="Center"
+                                 Spacing="15">
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                   Color="White"
+                                   HeightRequest="50"
+                                   WidthRequest="50"/>
+                <Label Text="Loading users..."
+                       TextColor="White"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</views:BasePage>

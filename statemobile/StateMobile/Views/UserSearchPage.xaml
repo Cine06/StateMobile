@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             xmlns:converters="clr-namespace:StateMobile.Converters"
+             x:Class="StateMobile.Views.UserSearchPage"
+             Title="Add Member"
+             BackgroundColor="#F5F6F7">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:Base64ImageConverter x:Key="Base64Converter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *, Auto">
+        <!-- Search Bar Header -->
+        <Border Grid.Row="0"
+                BackgroundColor="White"
+                StrokeThickness="0"
+                Padding="15,10">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05"/>
+            </Border.Shadow>
+            
+            <SearchBar x:Name="searchBar"
+                       Placeholder="Search by name (First, Last, Full)..."
+                       PlaceholderColor="#9CA3AF"
+                       TextColor="#111827"
+                       BackgroundColor="#F0F2F5"
+                       HeightRequest="44"
+                       TextChanged="OnSearchBarTextChanged"/>
+        </Border>
+
+        <!-- Search Results -->
+        <CollectionView Grid.Row="1"
+                        x:Name="usersCollectionView"
+                        SelectionMode="None"
+                        EmptyView="No users found">
+            <CollectionView.Header>
+                <BoxView HeightRequest="10" Color="Transparent"/>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:User">
+                    <Grid Padding="15,10" ColumnDefinitions="Auto, *, Auto">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnUserSelected"/>
+                        </Grid.GestureRecognizers>
+                        
+                        <!-- Avatar -->
+                        <Border Grid.Column="0"
+                                HeightRequest="44"
+                                WidthRequest="44"
+                                StrokeThickness="1"
+                                Stroke="#1E3A3A">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="22"/>
+                            </Border.StrokeShape>
+                            <Image Source="{Binding Photo, Converter={StaticResource Base64Converter}, TargetNullValue='user_avatar_placeholder.png'}"
+                                   Aspect="AspectFill"/>
+                        </Border>
+
+                        <!-- Info -->
+                        <VerticalStackLayout Grid.Column="1" 
+                                             VerticalOptions="Center" 
+                                             Margin="12,0"
+                                             Spacing="2">
+                            <Label Text="{Binding FullName}" 
+                                   FontAttributes="Bold" 
+                                   FontSize="15"
+                                   TextColor="#111827"/>
+                            <Label Text="{Binding DepartmentName}" 
+                                   FontSize="12"
+                                   TextColor="#6B7280"/>
+                        </VerticalStackLayout>
+
+                        <!-- Selection Indicator -->
+                        <CheckBox Grid.Column="2" 
+                                 IsChecked="{Binding IsSelected}"
+                                 Color="#498789"
+                                 VerticalOptions="Center"
+                                 HorizontalOptions="End"
+                                 InputTransparent="True"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Footer Actions -->
+        <Border Grid.Row="2"
+                BackgroundColor="White"
+                StrokeThickness="0"
+                Padding="20,15">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-2" Radius="5" Opacity="0.05"/>
+            </Border.Shadow>
+            <Button Text="Add Selected Members"
+                    BackgroundColor="#498789"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    HeightRequest="50"
+                    Clicked="OnAddSelectedClicked"/>
+        </Border>
+
+        <!-- ✅ Loading Skeleton Overlay -->
+        <VerticalStackLayout Grid.Row="1"
+                             Grid.RowSpan="2"
+                             x:Name="loadingOverlay"
+                             IsVisible="False"
+                             BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
+                             ZIndex="999"
+                             Spacing="1">
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+            <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

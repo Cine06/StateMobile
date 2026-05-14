@@ -1,0 +1,112 @@
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
+             x:Class="StateMobile.Views.SignaturePadView">
+
+    <Border BackgroundColor="#111827"
+            StrokeThickness="0"
+            Margin="16"
+            Padding="0">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="22" />
+        </Border.StrokeShape>
+
+        <Grid RowDefinitions="Auto, Auto, *, Auto">
+            <Grid Grid.Row="0" Padding="18,16" ColumnDefinitions="*, Auto">
+                <Label Text="Create a signature"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="White" />
+                <Button Grid.Column="1"
+                        Text="Cancel"
+                        BackgroundColor="Transparent"
+                        TextColor="#D1D5DB"
+                        Clicked="OnCancelClicked" />
+            </Grid>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*, *" Padding="16,0,16,12" ColumnSpacing="10">
+                <Button x:Name="btnDrawMode"
+                        Grid.Column="0"
+                        Text="Handwrite"
+                        Clicked="OnDrawModeClicked"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"
+                        HeightRequest="44" />
+                <Button x:Name="btnAttachMode"
+                        Grid.Column="1"
+                        Text="Import"
+                        Clicked="OnAttachModeClicked"
+                        BackgroundColor="#1F2937"
+                        TextColor="#D1D5DB"
+                        HeightRequest="44" />
+            </Grid>
+
+            <Grid Grid.Row="2" Margin="16,0,16,12">
+                <Border x:Name="canvasBorder" Stroke="#374151" StrokeThickness="1" BackgroundColor="White" IsVisible="True">
+                    <Grid>
+                        <Label Text="Please sign formally and clearly"
+                               TextColor="#9CA3AF"
+                               FontSize="13"
+                               HorizontalOptions="Start"
+                               VerticalOptions="Start"
+                               Margin="16" />
+                        <skia:SKCanvasView x:Name="canvasView"
+                                           PaintSurface="OnCanvasViewPaintSurface"
+                                           Touch="OnCanvasViewTouch"
+                                           EnableTouchEvents="True"
+                                           HorizontalOptions="Fill"
+                                           VerticalOptions="Fill" />
+                    </Grid>
+                </Border>
+
+                <Border x:Name="attachBorder" Stroke="#374151" StrokeThickness="1" BackgroundColor="White" IsVisible="False">
+                    <Grid RowDefinitions="*, Auto" Padding="18">
+                        <VerticalStackLayout x:Name="layoutAttachPlaceholder"
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Center"
+                                             Spacing="10">
+                            <Label Text="No signatures. To add, you can:"
+                                   TextColor="#9CA3AF"
+                                   FontSize="13"
+                                   HorizontalTextAlignment="Center" />
+                            <Button Text="Import from files"
+                                    Clicked="OnPickImageClicked"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    HeightRequest="44" />
+                        </VerticalStackLayout>
+
+                        <Grid x:Name="importPreviewContainer" IsVisible="False">
+                            <Image x:Name="imgSignaturePreview"
+                                   Aspect="AspectFit" />
+                        </Grid>
+
+                        <Button Grid.Row="1"
+                                x:Name="btnChangeImage"
+                                Text="Change image"
+                                Clicked="OnPickImageClicked"
+                                IsVisible="False"
+                                BackgroundColor="#1F2937"
+                                TextColor="White"
+                                HeightRequest="44"
+                                Margin="0,12,0,0" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="12" Padding="16,0,16,16">
+                <Button Grid.Column="0"
+                        Text="Clear"
+                        Clicked="OnClearClicked"
+                        BackgroundColor="#1F2937"
+                        TextColor="White" />
+
+                <Button Grid.Column="1"
+                        Text="Done"
+                        Clicked="OnDoneClicked"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White" />
+            </Grid>
+        </Grid>
+    </Border>
+</ContentView>

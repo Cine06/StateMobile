@@ -1,0 +1,15 @@
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:StateMobile.Views"
+             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
+             x:Class="StateMobile.Views.ChatDetailsPage"
+             ControlTemplate="{StaticResource MainPageTemplate}"
+             android:Application.WindowSoftInputModeAdjust="Resize"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#F5F6F7">
+
+    <views:ChatDetailsView x:Name="detailsView" 
+                           BackTapped="OnDetailsBackTapped"
+                           SettingsTapped="OnSettingsTapped" />
+
+</views:BasePage>

@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build API",
+			"type": "shell",
+			"command": "${workspaceFolder}\\StateMobile.API\\build.bat",
+			"group": "build"
+		}
+	]
+}

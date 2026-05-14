@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="StateMobile.API/StateMobile.API.csproj" Id="8cadcae3-c3df-409a-824d-d7e0d65308fb" />
+  <Project Path="StateMobile/StateMobile.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>
