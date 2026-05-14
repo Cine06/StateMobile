@@ -9,70 +9,82 @@ namespace StateMobile.ViewModel
     public partial class ChatViewModel : BasedViewModel
     {
         private readonly IChatService _chatService;
-        
-        [ObservableProperty]
-        private ObservableCollection<ChatRoomModel> _chatRooms = new();
 
         [ObservableProperty]
-        private ObservableCollection<ChatMessageModel> _messages = new();
+        private ObservableCollection<ChatMessageModel> messages = new();
 
         [ObservableProperty]
-        private string _newMessageText;
+        private ChatRoomModel selectedRoom;
 
         [ObservableProperty]
-        private ChatRoomModel _selectedRoom;
+        private string newMessageText;
+
+        [ObservableProperty]
+        private bool isBusy;
 
         public ChatViewModel(IChatService chatService)
         {
             _chatService = chatService;
-            _chatService.MessageReceived += OnMessageReceived;
+            // Makinig sa real-time messages
+            ((SignalRChatService)_chatService).MessageReceived += OnMessageReceived;
         }
 
-        [RelayCommand]
-        public async Task LoadRooms()
+        public async Task InitializeAsync(ChatRoomModel room)
         {
+            SelectedRoom = room;
             IsBusy = true;
-            var rooms = await _chatService.GetChatRoomsAsync();
-            ChatRooms = new ObservableCollection<ChatRoomModel>(rooms);
-            IsBusy = false;
+
+            try
+            {
+                await _chatService.ConnectAsync();
+                var history = await _chatService.GetMessagesAsync(room.RoomId);
+                
+                Messages.Clear();
+                foreach (var msg in history)
+                    Messages.Add(msg);
+
+                await _chatService.MarkAsReadAsync(room.RoomId);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         [RelayCommand]
-        public async Task SendMessage()
+        private async Task SendMessage()
         {
-            if (string.IsNullOrWhiteSpace(NewMessageText) || SelectedRoom == null) return;
+            if (string.IsNullOrWhiteSpace(NewMessageText)) return;
 
             var content = NewMessageText;
-            NewMessageText = string.Empty; // Clear immediately for snappy feel
+            NewMessageText = string.Empty; // Clear agad para sa magandang UX
 
-            var success = await _chatService.SendMessageAsync(SelectedRoom.Id, content);
+            var success = await _chatService.SendMessageAsync(SelectedRoom.RoomId, content);
             if (!success)
             {
-                // Handle failure (e.g., show toast)
+                // Ibalik ang text kung nag-fail
+                NewMessageText = content;
+                await App.Current.MainPage.DisplayAlert("Error", "Failed to send message.", "OK");
             }
         }
 
         private void OnMessageReceived(ChatMessageModel message)
         {
-            MainThread.BeginInvokeOnMainThread(() =>
+            // Siguraduhin na para sa kasalukuyang room ang message
+            if (message.RoomId == SelectedRoom?.RoomId)
             {
-                if (SelectedRoom != null && message.RoomId == SelectedRoom.Id)
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
                     Messages.Add(message);
-                    _chatService.MarkAsReadAsync(SelectedRoom.Id);
-                }
-                else
-                {
-                    // Update unread count in the list
-                    var room = ChatRooms.FirstOrDefault(r => r.Id == message.RoomId);
-                    if (room != null)
-                    {
-                        room.UnreadCount++;
-                        room.LastMessage = message.Content;
-                        room.LastMessageTime = DateTime.Now.ToString("HH:mm");
-                    }
-                }
-            });
+                });
+            }
+        }
+
+        [RelayCommand]
+        private async Task Back()
+        {
+            await _chatService.DisconnectAsync();
+            await Shell.Current.GoToAsync("..");
         }
     }
 }
