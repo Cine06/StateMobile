@@ -3,29 +3,58 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="StateMobile.Views.CameraScanPage"
              Title="Scan Document"
-             BackgroundColor="Black">
+             BackgroundColor="Black"
+             Shell.PresentationMode="Modal">
 
-    <Grid RowDefinitions="*, Auto, Auto">
-        <!-- Camera Preview Area -->
-        <CameraUpdateView x:Name="cameraView" Grid.Row="0" />
+    <Grid RowDefinitions="*, Auto, 120">
+        <!-- Camera Viewport -->
+        <CameraUpdateView x:Name="cameraView" Grid.Row="0" Grid.RowSpan="2" />
 
-        <!-- Captured Pages Thumbnails -->
-        <ScrollView Grid.Row="1" Orientation="Horizontal" HeightRequest="100" BackgroundColor="#33000000">
-            <HorizontalStackLayout x:Name="ThumbnailList" Spacing="10" Padding="10" />
-        </ScrollView>
+        <!-- Glassmorphism Thumbnail Strip -->
+        <Frame Grid.Row="1" 
+               Margin="15,0,15,10"
+               Padding="10"
+               BackgroundColor="#80000000"
+               BorderColor="#30FFFFFF"
+               CornerRadius="15"
+               HasShadow="False"
+               HeightRequest="90">
+            <ScrollView Orientation="Horizontal">
+                <HorizontalStackLayout x:Name="ThumbnailList" Spacing="12" />
+            </ScrollView>
+        </Frame>
 
-        <!-- Controls -->
-        <Grid Grid.Row="2" ColumnDefinitions="*, *, *" Padding="20" BackgroundColor="#1A1A1A">
-            <Button Text="Cancel" Clicked="OnCancelClicked" Grid.Column="0" BackgroundColor="Transparent" TextColor="White"/>
+        <!-- Professional Controls -->
+        <Grid Grid.Row="2" ColumnDefinitions="*, *, *" Padding="25,0" BackgroundColor="#121212">
+            <Button Text="Cancel" 
+                    Clicked="OnCancelClicked" 
+                    Grid.Column="0" 
+                    BackgroundColor="Transparent" 
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="14"/>
             
-            <Ellipse WidthRequest="70" HeightRequest="70" Fill="White" Stroke="Gray" StrokeThickness="4" Grid.Column="1" HorizontalOptions="Center">
-                <Ellipse.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnCaptureClicked" />
-                </Ellipse.GestureRecognizers>
-            </Ellipse>
+            <!-- Shutter Button -->
+            <Grid Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center">
+                <Ellipse WidthRequest="74" HeightRequest="74" Fill="Transparent" Stroke="White" StrokeThickness="3" />
+                <Ellipse WidthRequest="60" HeightRequest="60" Fill="White" Margin="7">
+                    <Ellipse.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCaptureClicked" />
+                    </Ellipse.GestureRecognizers>
+                </Ellipse>
+            </Grid>
 
-            <Button x:Name="DoneButton" Text="Done (0)" Clicked="OnDoneClicked" Grid.Column="2" 
-                    BackgroundColor="#498789" TextColor="White" CornerRadius="20" IsEnabled="False"/>
+            <Button x:Name="DoneButton" 
+                    Text="Done (0)" 
+                    Clicked="OnDoneClicked" 
+                    Grid.Column="2" 
+                    BackgroundColor="#498789" 
+                    TextColor="White" 
+                    CornerRadius="25"
+                    HeightRequest="45"
+                    Padding="15,0"
+                    FontAttributes="Bold"
+                    IsEnabled="False"/>
         </Grid>
     </Grid>
 </ContentPage>
