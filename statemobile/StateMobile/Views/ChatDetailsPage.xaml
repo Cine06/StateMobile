@@ -1,27 +1,63 @@
-<!-- ... existing code ... -->
-        <Frame Grid.Row="2" Padding="10,8" BackgroundColor="White">
-            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:StateMobile.ViewModel"
+             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
+             x:Class="StateMobile.Views.ChatDetailsPage"
+             android:Application.WindowSoftInputModeAdjust="Resize"
+             BackgroundColor="#F5F7F8">
+
+    <Grid RowDefinitions="Auto, *, Auto">
+        
+        <!-- Header (Laging Visible) -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Padding="15,10" BackgroundColor="#498789">
+            <ImageButton Source="back_icon.png" Command="{Binding BackCommand}" HeightRequest="25" />
+            <Label Grid.Column="1" Text="{Binding SelectedRoom.RoomName}" 
+                   TextColor="White" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0" />
+            <Image Source="user_avatar_placeholder.png" Grid.Column="2" HeightRequest="35" WidthRequest="35" />
+        </Grid>
+
+        <!-- Message List -->
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Messages}" 
+                        ItemsUpdatingScrollMode="KeepLastItemInView"
+                        VerticalScrollBarVisibility="Always">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10,5">
+                        <Frame BackgroundColor="{Binding IsMine, Converter={StaticResource MessageColorConverter}}"
+                               HorizontalOptions="{Binding IsMine, Converter={StaticResource MessageAlignConverter}}"
+                               CornerRadius="15" Padding="12,8" HasShadow="False">
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{Binding MessageText}" TextColor="White" />
+                                <Image Source="{Binding AttachmentPath}" IsVisible="{Binding HasAttachment}" 
+                                       HeightRequest="200" Aspect="AspectFill" />
+                                <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}" 
+                                       FontSize="10" TextColor="#E0E0E0" HorizontalOptions="End" />
+                                
+                                <!-- Retry Button for Failed Messages -->
+                                <Button Text="Retry" IsVisible="{Binding IsFailed}" 
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:ChatViewModel}}, Path=RetrySendCommand}"
+                                        CommandParameter="{Binding .}" HeightRequest="30" Padding="5,0" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Input Area (Fixed at Bottom) -->
+        <Frame Grid.Row="2" Padding="10,8" BackgroundColor="White" HasShadow="True" CornerRadius="0">
+            <Grid ColumnDefinitions="Auto, Auto, *, Auto" ColumnSpacing="8">
+                <ImageButton Source="plus_icon.png" Command="{Binding PickAttachmentCommand}" HeightRequest="28" />
+                <ImageButton Grid.Column="1" Source="mic_vm.png" Command="{Binding ScanDocumentCommand}" HeightRequest="28" />
                 
-                <!-- Attachment & Scan Buttons -->
-                <HorizontalStackLayout Spacing="5">
-                    <ImageButton Source="plus_icon.png" 
-                                 Command="{Binding PickAttachmentCommand}"
-                                 HeightRequest="25" WidthRequest="25" />
-                    <ImageButton Source="mic_vm.png" 
-                                 Command="{Binding ScanDocumentCommand}"
-                                 HeightRequest="25" WidthRequest="25" />
-                </HorizontalStackLayout>
-
-                <Editor Grid.Column="1"
-                        Placeholder="Type a message..."
-                        Text="{Binding NewMessageText}"
-                        AutoSize="TextChanges"
-                        MaximumHeightRequest="100" />
-
-                <ImageButton Grid.Column="2"
-                             Source="send_arrow.png"
-                             Command="{Binding SendMessageCommand}"
-                             HeightRequest="32" WidthRequest="32" />
+                <Editor Grid.Column="2" Placeholder="Type a message..." 
+                        Text="{Binding NewMessageText}" AutoSize="TextChanges" 
+                        MaximumHeightRequest="100" BackgroundColor="#F0F2F5" />
+                
+                <ImageButton Grid.Column="3" Source="send_arrow.png" 
+                             Command="{Binding SendMessageCommand}" HeightRequest="35" />
             </Grid>
         </Frame>
-<!-- ... existing code ... -->
+    </Grid>
+</ContentPage>

@@ -13,7 +13,6 @@ namespace StateMobile.ViewModel
 
         [ObservableProperty] private ObservableCollection<ChatMessageModel> messages = new();
         [ObservableProperty] private string newMessageText;
-        [ObservableProperty] private ChatRoomModel selectedRoom;
 
         public ChatViewModel(IChatService chatService, IDocumentScannerService scannerService)
         {
@@ -23,61 +22,55 @@ namespace StateMobile.ViewModel
             if (_chatService is SignalRChatService signalR)
             {
                 signalR.MessageReceived += (msg) => MainThread.BeginInvokeOnMainThread(() => Messages.Add(msg));
-                signalR.MessageDeleted += (id, everyone) => HandleDeletion(id, everyone);
+            }
+        }
+
+        [RelayCommand]
+        private async Task SendMessage()
+        {
+            if (string.IsNullOrWhiteSpace(NewMessageText)) return;
+
+            var msg = new ChatMessageModel { 
+                MessageText = NewMessageText, 
+                IsMine = true, 
+                Timestamp = DateTime.Now,
+                IsSending = true 
+            };
+            Messages.Add(msg);
+            
+            var text = NewMessageText;
+            NewMessageText = string.Empty;
+
+            var success = await _chatService.SendMessageAsync(SelectedRoom.RoomId, text);
+            if (!success) {
+                msg.IsFailed = true;
+                msg.IsSending = false;
             }
         }
 
         [RelayCommand]
         private async Task PickAttachment()
         {
-            var result = await FilePicker.Default.PickAsync(new PickOptions {
-                PickerTitle = "Select Attachment",
-                FileTypes = FilePickerFileType.Images
-            });
-
-            if (result != null)
-            {
-                await ((SignalRChatService)_chatService).SendAttachmentAsync(SelectedRoom.RoomId, result.FullPath, "image");
-            }
-        }
-
-        [RelayCommand]
-        private async Task ScanDocument()
-        {
-            var result = await _scannerService.ScanDocumentAsync();
-            if (result != null && result.Any())
-            {
-                // I-upload ang unang scanned page bilang PDF/Image
-                await ((SignalRChatService)_chatService).SendAttachmentAsync(SelectedRoom.RoomId, result.First().ImagePath, "pdf");
-            }
-        }
-
-        [RelayCommand]
-        private async Task DeleteMessage(ChatMessageModel message)
-        {
-            string action = await App.Current.MainPage.DisplayActionSheet("Delete Message?", "Cancel", null, "Delete for Me", "Delete for Everyone");
-            
-            if (action == "Delete for Me")
-                await ((SignalRChatService)_chatService).DeleteMessageAsync(message.MessageID, false);
-            else if (action == "Delete for Everyone")
-                await ((SignalRChatService)_chatService).DeleteMessageAsync(message.MessageID, true);
-        }
-
-        private void HandleDeletion(long id, bool everyone)
-        {
-            MainThread.BeginInvokeOnMainThread(() => {
-                var msg = Messages.FirstOrDefault(m => m.MessageID == id);
-                if (msg != null)
-                {
-                    if (everyone) {
-                        msg.MessageText = "This message was deleted.";
-                        msg.IsDeletedForEveryone = true;
-                        msg.AttachmentPath = null;
-                    } else {
-                        Messages.Remove(msg);
-                    }
+            try {
+                var result = await FilePicker.Default.PickAsync(new PickOptions { FileTypes = FilePickerFileType.Images });
+                if (result != null) {
+                    // Professional Image + Text support
+                    var success = await ((SignalRChatService)_chatService).SendAttachmentAsync(
+                        SelectedRoom.RoomId, result.FullPath, "image", NewMessageText);
+                    
+                    if (success) NewMessageText = string.Empty;
+                    else await App.Current.MainPage.DisplayAlert("Error", "Failed to send image.", "OK");
                 }
-            });
+            } catch { /* Handle error */ }
+        }
+
+        [RelayCommand]
+        private async Task RetrySend(ChatMessageModel msg)
+        {
+            msg.IsFailed = false;
+            msg.IsSending = true;
+            var success = await _chatService.SendMessageAsync(SelectedRoom.RoomId, msg.MessageText);
+            if (!success) msg.IsFailed = true;
         }
     }
 }
