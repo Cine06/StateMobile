@@ -9,79 +9,70 @@ namespace StateMobile.ViewModel
     public partial class ChatViewModel : BasedViewModel
     {
         private readonly IChatService _chatService;
-        private readonly string _currentUserId;
+        
+        [ObservableProperty]
+        private ObservableCollection<ChatRoomModel> _chatRooms = new();
 
-        [ObservableProperty] private string _messageText;
-        [ObservableProperty] private ChatRoomModel _currentRoom;
-        public ObservableCollection<ChatMessageModel> Messages { get; } = new();
+        [ObservableProperty]
+        private ObservableCollection<ChatMessageModel> _messages = new();
+
+        [ObservableProperty]
+        private string _newMessageText;
+
+        [ObservableProperty]
+        private ChatRoomModel _selectedRoom;
 
         public ChatViewModel(IChatService chatService)
         {
             _chatService = chatService;
-            _currentUserId = Preferences.Get("UserId", "");
+            _chatService.MessageReceived += OnMessageReceived;
         }
 
         [RelayCommand]
-        private async Task SendImage(bool fromCamera)
+        public async Task LoadRooms()
         {
-            FileResult photo = fromCamera 
-                ? await MediaPicker.Default.CapturePhotoAsync() 
-                : await MediaPicker.Default.PickPhotoAsync();
-
-            if (photo == null) return;
-
-            // 1. Compress Image to prevent "Payload Too Large" or DB errors
-            using var stream = await photo.OpenReadAsync();
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            byte[] data = memoryStream.ToArray();
-
-            // Simple compression logic (if > 1MB, you'd ideally resize here)
-            var attachment = new AttachmentModel
-            {
-                FileName = photo.FileName,
-                FileType = photo.ContentType,
-                Data = data // In a real app, use a resizing library here
-            };
-
-            await SendMessageInternal(string.Empty, attachment);
+            IsBusy = true;
+            var rooms = await _chatService.GetChatRoomsAsync();
+            ChatRooms = new ObservableCollection<ChatRoomModel>(rooms);
+            IsBusy = false;
         }
 
         [RelayCommand]
-        private async Task SendMessage()
+        public async Task SendMessage()
         {
-            if (string.IsNullOrWhiteSpace(MessageText)) return;
-            var text = MessageText;
-            MessageText = string.Empty;
-            await SendMessageInternal(text, null);
+            if (string.IsNullOrWhiteSpace(NewMessageText) || SelectedRoom == null) return;
+
+            var content = NewMessageText;
+            NewMessageText = string.Empty; // Clear immediately for snappy feel
+
+            var success = await _chatService.SendMessageAsync(SelectedRoom.Id, content);
+            if (!success)
+            {
+                // Handle failure (e.g., show toast)
+            }
         }
 
-        private async Task SendMessageInternal(string text, AttachmentModel attachment)
+        private void OnMessageReceived(ChatMessageModel message)
         {
-            var message = new ChatMessageModel
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                RoomID = CurrentRoom.RoomID,
-                SenderID = _currentUserId,
-                MessageText = text,
-                Attachment = attachment,
-                Timestamp = DateTime.Now
-            };
-
-            Messages.Add(message);
-            message.IsSending = true;
-
-            try 
-            {
-                // Use your API Service to POST to "api/chat/send"
-                // If it fails, set message.IsFailed = true
-                message.IsSending = false;
-            }
-            catch (Exception ex)
-            {
-                message.IsSending = false;
-                message.IsFailed = true;
-                Console.WriteLine($"[Chat] Send failed: {ex.Message}");
-            }
+                if (SelectedRoom != null && message.RoomId == SelectedRoom.Id)
+                {
+                    Messages.Add(message);
+                    _chatService.MarkAsReadAsync(SelectedRoom.Id);
+                }
+                else
+                {
+                    // Update unread count in the list
+                    var room = ChatRooms.FirstOrDefault(r => r.Id == message.RoomId);
+                    if (room != null)
+                    {
+                        room.UnreadCount++;
+                        room.LastMessage = message.Content;
+                        room.LastMessageTime = DateTime.Now.ToString("HH:mm");
+                    }
+                }
+            });
         }
     }
 }
