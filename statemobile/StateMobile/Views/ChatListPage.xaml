@@ -1,339 +1,49 @@
-<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-                xmlns:views="clr-namespace:StateMobile.Views"
-                xmlns:models="clr-namespace:StateMobile.Models"
-                xmlns:converters="clr-namespace:StateMobile.Converters"
-                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-                x:Class="StateMobile.Views.ChatListPage"
-                x:Name="this"
-                ControlTemplate="{StaticResource MainPageTemplate}"
-                NavigationPage.HasNavigationBar="False"
-                BackgroundColor="{AppThemeBinding Light=#F5F6F7, Dark=#0F0F1E}">
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="StateMobile.Views.ChatListPage"
+             Title="Messages"
+             BackgroundColor="White">
 
-    <views:BasePage.Resources>
-        <ResourceDictionary>
-            <converters:SelectedBackgroundConverter x:Key="SelectedBackgroundConverter" />
-            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
-        </ResourceDictionary>
-    </views:BasePage.Resources>
+    <Grid RowDefinitions="Auto, *">
+        <!-- Search Bar -->
+        <Frame Grid.Row="0" Margin="15,10" Padding="12,0" CornerRadius="20" HasShadow="False" BackgroundColor="#F1F3F4" BorderColor="Transparent">
+            <Grid ColumnDefinitions="Auto, *">
+                <Image Source="search_icon_gray.png" WidthRequest="18" HeightRequest="18" VerticalOptions="Center" Margin="5,0,10,0"/>
+                <Entry Grid.Column="1" Placeholder="Search conversations..." FontSize="14" VerticalOptions="Center" TextColor="#333333"/>
+            </Grid>
+        </Frame>
 
-    <Grid x:Name="mainGrid">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="leftColumn" Width="*" />
-            <ColumnDefinition x:Name="rightColumn" Width="0" />
-            <ColumnDefinition x:Name="settingsColumn" Width="0" />
-        </Grid.ColumnDefinitions>
+        <!-- Conversations List -->
+        <CollectionView Grid.Row="1" ItemsSource="{Binding ChatRooms}" SelectionMode="Single" SelectionChanged="OnConversationSelected">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="15,10" ColumnDefinitions="60, *, Auto" RowDefinitions="Auto, Auto">
+                        <!-- Avatar -->
+                        <Frame Grid.Column="0" Grid.RowSpan="2" WidthRequest="50" HeightRequest="50" CornerRadius="25" Padding="0" IsClippedToBounds="True" HasShadow="False" BorderColor="#E0E0E0">
+                            <Image Source="{Binding RoomImage}" Aspect="AspectFill" />
+                        </Frame>
 
-        <!-- ✅ Left Panel: Chat List -->
-        <Grid Grid.Column="0" RowDefinitions="Auto, Auto, Auto, *, Auto">
-            <!-- ✅ Header -->
-            <Border Grid.Row="0"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#151525}"
-                    StrokeThickness="0"
-                    ZIndex="1">
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,1" Radius="4" Opacity="0.05"/>
-                </Border.Shadow>
-                <Grid ColumnDefinitions="*, Auto" Padding="20,14">
-                    <VerticalStackLayout VerticalOptions="Center" Spacing="0">
-                        <Label Text="Messages" 
-                                VerticalOptions="Center" 
-                                TextColor="{AppThemeBinding Light=#1E3A3A, Dark=White}" 
-                                FontSize="22" 
-                                FontAttributes="Bold"/>
-                        <Label Text="Keep in touch with your team" 
-                                FontSize="12" 
-                                TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#A0AEC0}"
-                                Margin="0,2,0,0"/>
-                    </VerticalStackLayout>
+                        <!-- Name & Time -->
+                        <Label Grid.Column="1" Text="{Binding RoomName}" FontAttributes="Bold" FontSize="16" TextColor="#333333" VerticalOptions="End" Margin="10,0,0,0"/>
+                        <Label Grid.Column="2" Text="{Binding LastMessageTime}" FontSize="12" TextColor="#999999" VerticalOptions="End"/>
 
-                    <Border Grid.Column="1"
-                            BackgroundColor="#3B7A7A"
-                            StrokeThickness="0"
-                            HeightRequest="36"
-                            WidthRequest="36"
-                            VerticalOptions="Center">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="18"/>
-                        </Border.StrokeShape>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNewMessageButtonClicked"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="+" 
-                               FontSize="24" 
-                               TextColor="White"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"
-                               Margin="0,-1,0,0"/>
-                    </Border>
-                </Grid>
+                        <!-- Last Message & Unread Badge -->
+                        <Label Grid.Column="1" Grid.Row="1" Text="{Binding LastMessage}" FontSize="14" TextColor="#666666" MaxLines="1" LineBreakMode="TailTruncation" Margin="10,2,0,0"/>
+                        <Frame Grid.Column="2" Grid.Row="1" IsVisible="{Binding UnreadCount, Converter={StaticResource GreaterThanZeroConverter}}" 
+                               BackgroundColor="#498789" CornerRadius="10" Padding="6,2" HasShadow="False" HorizontalOptions="End" VerticalOptions="Start" Margin="0,5,0,0">
+                            <Label Text="{Binding UnreadCount}" TextColor="White" FontSize="10" FontAttributes="Bold"/>
+                        </Frame>
+                        
+                        <BoxView Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" HeightRequest="1" BackgroundColor="#F0F0F0" VerticalOptions="End" Margin="10,10,0,-10"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
-            <!-- ✅ Selection Mode Toolbar -->
-            <HorizontalStackLayout Grid.Row="1"
-                           IsVisible="{Binding IsSelectionMode}"
-                           BackgroundColor="{AppThemeBinding Light=#F0F2F5, Dark=#1A1A2E}"
-                           Padding="10"
-                           Spacing="10"
-                           ZIndex="50"
-                           InputTransparent="False">
-
-                <!-- ✅ Select All / Unselect All Button -->
-                <Button Text="{Binding SelectAllButtonText}"
-                        Clicked="OnSelectAllClicked"
-                        FontSize="12"
-                        HeightRequest="35"
-                        BackgroundColor="#4CAF50"
-                        TextColor="White"
-                        InputTransparent="False"/>
-
-                <!-- ✅ Delete Button -->
-                <Button Text="Delete"
-                        Clicked="OnArchiveClicked"
-                        BackgroundColor="#EF4444"
-                        TextColor="White"
-                        FontSize="12"
-                        HeightRequest="35"
-                        InputTransparent="False"/>
-
-                <!-- ✅ Cancel Button -->
-                <Button Text="Cancel"
-                        Clicked="OnCancelClicked"
-                        FontSize="12"
-                        HeightRequest="35"
-                        BackgroundColor="#9E9E9E"
-                        TextColor="White"
-                        InputTransparent="False"/>
-
-                <!-- ✅ Show selected count -->
-                <Label Text="{Binding SelectedItems.Count, StringFormat='{0} selected'}"
-                       VerticalOptions="Center"
-                       FontSize="14"
-                       TextColor="{AppThemeBinding Light=#1E3A3A, Dark=White}"
-                       FontAttributes="Bold"
-                       Margin="10,0,0,0"
-                       IsVisible="{Binding HasAnySelected}"/>
-            </HorizontalStackLayout>
-
-            <!-- ✅ Search Bar -->
-            <Border Grid.Row="2" 
-                    Margin="15,15,15,10" 
-                    StrokeShape="RoundRectangle 25" 
-                    StrokeThickness="0" 
-                    BackgroundColor="{AppThemeBinding Light=#F0F2F5, Dark=#2A2A3E}">
-                <Grid ColumnDefinitions="Auto, *, Auto">
-                    <Image Source="search_icon_gray.png" 
-                           HeightRequest="18" 
-                           Margin="15,0,5,0" 
-                           VerticalOptions="Center"/>
-                    <Entry x:Name="searchEntry"
-                           Grid.Column="1"
-                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                           Placeholder="Search"
-                           TextChanged="OnSearchTextChanged"
-                           FontSize="15"
-                           HeightRequest="45"
-                           VerticalOptions="Center"/>
-
-                    <ActivityIndicator Grid.Column="2"
-                                      IsRunning="{Binding IsSearchingUsers}"
-                                      IsVisible="{Binding IsSearchingUsers}"
-                                      Color="#A4C2C2"
-                                      HeightRequest="20"
-                                      WidthRequest="20"
-                                      Margin="0,0,15,0"
-                                      VerticalOptions="Center"/>
-                </Grid>
-            </Border>
-
-            <!-- ✅ Chat List -->
-            <CollectionView Grid.Row="3" 
-                            x:Name="chatCollectionView"
-                            ItemsSource="{Binding DisplayItems}" 
-                            SelectionChanged="OnChatSelected" 
-                            SelectionMode="None"
-                            BackgroundColor="Transparent">
-
-                <CollectionView.EmptyView>
-                    <StackLayout VerticalOptions="Center" 
-                                 HorizontalOptions="Center" 
-                                 Spacing="10"
-                                 IsVisible="{Binding HasNoItems}">
-                        <Label Text="💬" 
-                               FontSize="60"
-                               HorizontalOptions="Center"/>
-                        <Label Text="{Binding EmptyStateTitle}" 
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{AppThemeBinding Light=#6B7280, Dark=White}"
-                               HorizontalOptions="Center"/>
-                        <Label Text="{Binding EmptyStateMessage}" 
-                               FontSize="14"
-                               TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#A0AEC0}"
-                               HorizontalOptions="Center"/>
-                    </StackLayout>
-                </CollectionView.EmptyView>
-
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#151525}" 
-                                 StrokeThickness="0"
-                                 Margin="0,0,0,1">
-
-                            <ContentView>
-                                <Grid Padding="15,12" 
-                                      ColumnDefinitions="Auto, 55, *, Auto"
-                                      RowDefinitions="Auto, Auto"
-                                      ColumnSpacing="12"
-                                      BackgroundColor="{Binding IsSelected, Converter={StaticResource SelectedBackgroundConverter}}">
-
-                                    <Grid.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnChatItemTapped" />
-                                    </Grid.GestureRecognizers>
-                                    <Grid.Behaviors>
-                                        <toolkit:TouchBehavior
-                                            LongPressDuration="1000"
-                                            LongPressCommand="{Binding Source={x:Reference this}, Path=BindingContext.LongPressCommand}"
-                                            LongPressCommandParameter="{Binding .}" />
-                                    </Grid.Behaviors>
-
-                                    <!-- ✅ Checkbox -->
-                                    <CheckBox Grid.Column="0"
-                                              Grid.RowSpan="2"
-                                              IsVisible="{Binding Source={x:Reference this}, Path=BindingContext.IsSelectionMode}"
-                                              IsChecked="{Binding IsSelected}"
-                                              VerticalOptions="Center"
-                                              Margin="0,0,10,0"/>
-
-                                    <!-- ✅ Avatar -->
-                                    <Border Grid.Column="1" 
-                                            Grid.RowSpan="2"
-                                            BackgroundColor="#D1E7E7"
-                                            StrokeThickness="1"
-                                            Stroke="White"
-                                            HeightRequest="50" 
-                                            WidthRequest="50"
-                                            VerticalOptions="Center"
-                                            HorizontalOptions="Center">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="25"/>
-                                        </Border.StrokeShape>
-
-                                        <Image Source="{Binding DisplayImageSource, TargetNullValue='user_avatar_placeholder.png', FallbackValue='user_avatar_placeholder.png'}" 
-                                               Aspect="AspectFill"
-                                               HorizontalOptions="Fill"
-                                               VerticalOptions="Fill"
-                                               IsAnimationPlaying="False"/>
-                                    </Border>
-
-                                    <!-- ✅ Online Status -->
-                                    <Ellipse Grid.Column="1"
-                                             Grid.RowSpan="2"
-                                             Fill="{Binding StatusColor}"
-                                             HeightRequest="14"
-                                             WidthRequest="14"
-                                             HorizontalOptions="End"
-                                             VerticalOptions="End"
-                                             Margin="0,0,2,2"
-                                             Stroke="White"
-                                             StrokeThickness="2"
-                                             IsVisible="{Binding StatusColor, Converter={StaticResource IsNotNullConverter}}"/>
-
-                                    <Label Grid.Column="2" 
-                                            Grid.Row="0"
-                                            Text="{Binding DisplayName}" 
-                                            FontAttributes="{Binding NameFontAttribute}" 
-                                            FontSize="15" 
-                                            TextColor="{Binding NameTextColor}"
-                                            LineBreakMode="TailTruncation"
-                                            MaxLines="1"
-                                            VerticalOptions="End"/>
-
-                                    <!-- ✅ Last Message -->
-                                    <Label Grid.Column="2" 
-                                            Grid.Row="1"
-                                            Text="{Binding DisplaySubtitle}" 
-                                            FontAttributes="{Binding MessageFontAttribute}"
-                                            FontSize="12" 
-                                            TextColor="{Binding MessageTextColor}"
-                                            LineBreakMode="TailTruncation"
-                                            MaxLines="1"
-                                            VerticalOptions="Start"
-                                            Margin="0,2,0,0"/>
-
-                                    <!-- ✅ Timestamp -->
-                                    <Label Grid.Column="3" 
-                                            Grid.Row="0"
-                                            Text="{Binding LastMessageTime, StringFormat='{0:h:mm tt}'}" 
-                                            FontSize="12" 
-                                            TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#888899}"
-                                            HorizontalOptions="End"
-                                            VerticalOptions="End"
-                                            IsVisible="{Binding LastMessageTime, Converter={StaticResource IsNotNullConverter}}"/>
-
-                                    <!-- ✅ Unread Badge -->
-                                    <Border Grid.Column="3"
-                                             Grid.Row="1"
-                                             BackgroundColor="#EF4444"
-                                             StrokeThickness="0"
-                                             HeightRequest="20"
-                                             MinimumWidthRequest="20"
-                                             HorizontalOptions="End"
-                                             VerticalOptions="Start"
-                                             Margin="0,2,0,0"
-                                             IsVisible="{Binding HasUnread}">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="10"/>
-                                        </Border.StrokeShape>
-                                        <Label Text="{Binding UnreadCount}"
-                                               TextColor="White"
-                                               FontSize="11"
-                                               FontAttributes="Bold"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center"
-                                               Padding="5,0"/>
-                                    </Border>
-                                </Grid>
-                            </ContentView>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <!-- ✅ Loading Skeleton -->
-            <VerticalStackLayout Grid.Row="3"
-                                 IsVisible="{Binding IsLoading}"
-                                 BackgroundColor="{AppThemeBinding Light=White, Dark=#0F0F1E}"
-                                 ZIndex="999"
-                                 Spacing="1">
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-                <ContentView ControlTemplate="{StaticResource ListItemSkeletonTemplate}" />
-            </VerticalStackLayout>
-        </Grid>
-        
-        <!-- ✅ Vertical Separator (Windows only) -->
-        <BoxView x:Name="verticalSeparator"
-                 Grid.Column="0" 
-                 WidthRequest="1" 
-                 BackgroundColor="{AppThemeBinding Light=#E5E7EB, Dark=#2D2D3A}" 
-                 HorizontalOptions="End" 
-                 IsVisible="False" />
-
-        <!-- ✅ Right Panel: Chat Details (Windows only) -->
-        <views:ChatDetailsView Grid.Column="1" 
-                               x:Name="sideDetailsView" 
-                               ShowBackButton="True"
-                               IsVisible="{OnPlatform WinUI=True, Default=False}"
-                               SettingsTapped="OnSideSettingsTapped" />
-
-        <!-- ✅ Far Right Panel: Group Settings (Windows only) -->
-        <views:GroupSettingsView Grid.Column="2" 
-                                 x:Name="sideSettingsView" 
-                                 IsVisible="False" />
+        <!-- New Chat FAB -->
+        <Button Grid.Row="1" Text="+" FontSize="24" BackgroundColor="#054b45" TextColor="White" 
+                WidthRequest="56" HeightRequest="56" CornerRadius="28" 
+                HorizontalOptions="End" VerticalOptions="End" Margin="20" Shadow="{Shadow Brush=Black, Offset='0,4', Radius=10, Opacity=0.2}"/>
     </Grid>
-</views:BasePage>
+</ContentPage>

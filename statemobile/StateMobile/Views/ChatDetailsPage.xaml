@@ -1,29 +1,59 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:StateMobile.ViewModel"
              x:Class="StateMobile.Views.ChatDetailsPage"
-             Title="{Binding CurrentRoom.RoomName}">
+             BackgroundColor="#F7F9FB">
+
+    <Shell.TitleView>
+        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+            <Frame WidthRequest="36" HeightRequest="36" CornerRadius="18" Padding="0" IsClippedToBounds="True" HasShadow="False">
+                <Image Source="{Binding RoomImage}" Aspect="AspectFill"/>
+            </Frame>
+            <VerticalStackLayout VerticalOptions="Center">
+                <Label Text="{Binding RoomName}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
+                <Label Text="Online" FontSize="11" TextColor="#B0FFFFFF"/>
+            </VerticalStackLayout>
+        </HorizontalStackLayout>
+    </Shell.TitleView>
 
     <Grid RowDefinitions="*, Auto">
-        <CollectionView Grid.Row="0" ItemsSource="{Binding Messages}">
+        <!-- Messages List -->
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Messages}" ItemsLayout="VerticalList" Padding="10">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <VerticalStackLayout Padding="10">
-                        <Frame CornerRadius="10" BackgroundColor="{Binding IsMe, Converter={StaticResource SelectionColorConverter}}">
-                            <Label Text="{Binding MessageText}" />
-                        </Frame>
-                        <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}" FontSize="Caption" HorizontalOptions="End" />
-                    </VerticalStackLayout>
+                    <Grid Padding="0,5">
+                        <!-- Sent Message (Right) -->
+                        <VerticalStackLayout HorizontalOptions="End" IsVisible="{Binding IsFromMe}" Spacing="2" MaximumWidthRequest="280">
+                            <Frame BackgroundColor="#498789" CornerRadius="18" Padding="12,8" HasShadow="False">
+                                <Label Text="{Binding Content}" TextColor="White" FontSize="15"/>
+                            </Frame>
+                            <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}" FontSize="10" TextColor="#999999" HorizontalOptions="End" Margin="0,0,5,0"/>
+                        </VerticalStackLayout>
+
+                        <!-- Received Message (Left) -->
+                        <VerticalStackLayout HorizontalOptions="Start" IsVisible="{Binding IsFromMe, Converter={StaticResource InvertedBoolConverter}}" Spacing="2" MaximumWidthRequest="280">
+                            <Frame BackgroundColor="White" CornerRadius="18" Padding="12,8" HasShadow="False" BorderColor="#E0E0E0">
+                                <Label Text="{Binding Content}" TextColor="#333333" FontSize="15"/>
+                            </Frame>
+                            <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}" FontSize="10" TextColor="#999999" HorizontalOptions="Start" Margin="5,0,0,0"/>
+                        </VerticalStackLayout>
+                    </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto, Auto" Padding="10" BackgroundColor="White">
-            <Button Grid.Column="0" Text="+" Command="{Binding AttachFileCommand}" />
-            <Entry Grid.Column="1" Text="{Binding MessageText}" Placeholder="Type a message..." />
-            <Button Grid.Column="2" Text="Scan" Command="{Binding ScanDocumentCommand}" />
-            <Button Grid.Column="3" Text="Send" Command="{Binding SendMessageCommand}" />
-        </Grid>
+        <!-- Input Area -->
+        <Frame Grid.Row="1" Padding="10,5" CornerRadius="0" HasShadow="True" BackgroundColor="White" BorderColor="#E0E0E0">
+            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
+                <Button Text="+" BackgroundColor="Transparent" TextColor="#498789" FontSize="24" WidthRequest="40" Padding="0"/>
+                
+                <Frame Grid.Column="1" Padding="15,0" CornerRadius="20" BackgroundColor="#F1F3F4" HasShadow="False" BorderColor="Transparent" HeightRequest="40">
+                    <Entry Placeholder="Type a message..." FontSize="14" VerticalOptions="Center" TextColor="#333333" BackgroundColor="Transparent"/>
+                </Frame>
+
+                <ImageButton Grid.Column="2" Source="send_arrow.png" WidthRequest="36" HeightRequest="36" 
+                             BackgroundColor="#054b45" CornerRadius="18" Padding="8" VerticalOptions="Center"/>
+            </Grid>
+        </Frame>
     </Grid>
 </ContentPage>
