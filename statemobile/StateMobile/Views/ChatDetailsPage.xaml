@@ -1,58 +1,68 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2001/xaml"
+             xmlns:vm="clr-namespace:StateMobile.ViewModel"
+             xmlns:models="clr-namespace:StateMobile.Models"
+             xmlns:selectors="clr-namespace:StateMobile.Selectors"
              x:Class="StateMobile.Views.ChatDetailsPage"
-             BackgroundColor="#F7F9FB">
+             Title="{Binding SelectedRoom.RoomName}"
+             BackgroundColor="{StaticResource Secondary}">
 
-    <Shell.TitleView>
-        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-            <Frame WidthRequest="36" HeightRequest="36" CornerRadius="18" Padding="0" IsClippedToBounds="True" HasShadow="False">
-                <Image Source="{Binding RoomImage}" Aspect="AspectFill"/>
-            </Frame>
-            <VerticalStackLayout VerticalOptions="Center">
-                <Label Text="{Binding RoomName}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
-                <Label Text="Online" FontSize="11" TextColor="#B0FFFFFF"/>
-            </VerticalStackLayout>
-        </HorizontalStackLayout>
-    </Shell.TitleView>
+    <ContentPage.Resources>
+        <selectors:ChatMessageTemplateSelector x:Key="MessageSelector" />
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="*, Auto">
-        <!-- Messages List -->
-        <CollectionView Grid.Row="0" ItemsSource="{Binding Messages}" ItemsLayout="VerticalList" Padding="10">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Padding="0,5">
-                        <!-- Sent Message (Right) -->
-                        <VerticalStackLayout HorizontalOptions="End" IsVisible="{Binding IsFromMe}" Spacing="2" MaximumWidthRequest="280">
-                            <Frame BackgroundColor="#498789" CornerRadius="18" Padding="12,8" HasShadow="False">
-                                <Label Text="{Binding Content}" TextColor="White" FontSize="15"/>
-                            </Frame>
-                            <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}" FontSize="10" TextColor="#999999" HorizontalOptions="End" Margin="0,0,5,0"/>
-                        </VerticalStackLayout>
-
-                        <!-- Received Message (Left) -->
-                        <VerticalStackLayout HorizontalOptions="Start" IsVisible="{Binding IsFromMe, Converter={StaticResource InvertedBoolConverter}}" Spacing="2" MaximumWidthRequest="280">
-                            <Frame BackgroundColor="White" CornerRadius="18" Padding="12,8" HasShadow="False" BorderColor="#E0E0E0">
-                                <Label Text="{Binding Content}" TextColor="#333333" FontSize="15"/>
-                            </Frame>
-                            <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}" FontSize="10" TextColor="#999999" HorizontalOptions="Start" Margin="5,0,0,0"/>
-                        </VerticalStackLayout>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
+        
+        <!-- Chat Messages List -->
+        <!-- ItemsUpdatingScrollMode="KeepLastItemInView" is critical for mobile chat -->
+        <CollectionView x:Name="MessagesList"
+                        Grid.Row="0"
+                        ItemsSource="{Binding Messages}"
+                        ItemTemplate="{StaticResource MessageSelector}"
+                        ItemsUpdatingScrollMode="KeepLastItemInView"
+                        VerticalScrollBarVisibility="Never"
+                        Margin="10,0">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
         </CollectionView>
 
-        <!-- Input Area -->
-        <Frame Grid.Row="1" Padding="10,5" CornerRadius="0" HasShadow="True" BackgroundColor="White" BorderColor="#E0E0E0">
-            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
-                <Button Text="+" BackgroundColor="Transparent" TextColor="#498789" FontSize="24" WidthRequest="40" Padding="0"/>
+        <!-- Mobile Input Area -->
+        <Frame Grid.Row="1" 
+               Padding="10,5" 
+               Margin="0"
+               CornerRadius="0"
+               HasShadow="False"
+               BorderColor="{StaticResource Gray200}"
+               BackgroundColor="White">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
                 
-                <Frame Grid.Column="1" Padding="15,0" CornerRadius="20" BackgroundColor="#F1F3F4" HasShadow="False" BorderColor="Transparent" HeightRequest="40">
-                    <Entry Placeholder="Type a message..." FontSize="14" VerticalOptions="Center" TextColor="#333333" BackgroundColor="Transparent"/>
-                </Frame>
+                <Editor x:Name="MessageEntry"
+                        Placeholder="Type a message..."
+                        Text="{Binding NewMessageText}"
+                        AutoSize="TextChanges"
+                        MaximumHeightRequest="120"
+                        VerticalOptions="Center"
+                        Keyboard="Chat"
+                        BackgroundColor="Transparent" />
 
-                <ImageButton Grid.Column="2" Source="send_arrow.png" WidthRequest="36" HeightRequest="36" 
-                             BackgroundColor="#054b45" CornerRadius="18" Padding="8" VerticalOptions="Center"/>
+                <ImageButton Grid.Column="1"
+                             Source="send_arrow.png"
+                             Command="{Binding SendMessageCommand}"
+                             HeightRequest="35"
+                             WidthRequest="35"
+                             VerticalOptions="End"
+                             Margin="0,0,5,5">
+                    <ImageButton.Triggers>
+                        <DataTrigger TargetType="ImageButton"
+                                     Binding="{Binding NewMessageText.Length}"
+                                     Value="0">
+                            <Setter Property="Opacity" Value="0.5" />
+                            <Setter Property="IsEnabled" Value="False" />
+                        </DataTrigger>
+                    </ImageButton.Triggers>
+                </ImageButton>
             </Grid>
         </Frame>
     </Grid>

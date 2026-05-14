@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using StateMobile.Models;
-using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace StateMobile.Services
@@ -10,40 +10,81 @@ namespace StateMobile.Services
         private HubConnection _hubConnection;
         private readonly string _hubUrl = AppSettings.ApiBaseUrl + "/chatHub";
 
-        public event Action<ChatMessageModel> OnMessageReceived;
-        public event Action<long, bool> OnMessageDeleted;
-        public event Action<string, bool> OnUserStatusChanged;
-        public event Action<string, bool> OnUserTyping;
+        public event Action<ChatMessageModel> MessageReceived;
 
-        public async Task ConnectAsync(string userId)
+        public SignalRChatService()
         {
-            if (_hubConnection?.State == HubConnectionState.Connected) return;
-
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl($"{_hubUrl}?userId={userId}")
-                .WithAutomaticReconnect()
+                .WithUrl(_hubUrl)
+                .WithAutomaticReconnect(new[] { TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10) })
                 .Build();
 
-            _hubConnection.On<ChatMessageModel>("ReceiveMessage", (message) => OnMessageReceived?.Invoke(message));
-            _hubConnection.On<long, bool>("MessageDeleted", (id, everyone) => OnMessageDeleted?.Invoke(id, everyone));
-            _hubConnection.On<string, bool>("UserStatusChanged", (uid, online) => OnUserStatusChanged?.Invoke(uid, online));
-            _hubConnection.On<string, bool>("UserTyping", (uid, typing) => OnUserTyping?.Invoke(uid, typing));
-
-            await _hubConnection.StartAsync();
+            _hubConnection.On<ChatMessageModel>("ReceiveMessage", (message) =>
+            {
+                MessageReceived?.Invoke(message);
+            });
         }
 
-        public async Task JoinRoomAsync(string roomId) => await _hubConnection.InvokeAsync("JoinRoom", roomId);
-        public async Task LeaveRoomAsync(string roomId) => await _hubConnection.InvokeAsync("LeaveRoom", roomId);
-        public async Task SendTypingAsync(string roomId, string userId, bool isTyping) => 
-            await _hubConnection.InvokeAsync("Typing", roomId, userId, isTyping);
+        public async Task ConnectAsync()
+        {
+            if (_hubConnection.State == HubConnectionState.Disconnected)
+            {
+                try
+                {
+                    await _hubConnection.StartAsync();
+                }
+                catch (Exception ex)
+                {
+                    // Log error for mobile debugging
+                    System.Diagnostics.Debug.WriteLine($"SignalR Connection Error: {ex.Message}");
+                }
+            }
+        }
 
         public async Task DisconnectAsync()
         {
-            if (_hubConnection != null)
+            if (_hubConnection.State != HubConnectionState.Disconnected)
             {
                 await _hubConnection.StopAsync();
-                await _hubConnection.DisposeAsync();
             }
+        }
+
+        public async Task<bool> SendMessageAsync(int roomId, string content)
+        {
+            try
+            {
+                if (_hubConnection.State != HubConnectionState.Connected)
+                    await ConnectAsync();
+
+                await _hubConnection.InvokeAsync("SendMessage", roomId, content);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<IEnumerable<ChatRoomModel>> GetChatRoomsAsync()
+        {
+            // In a real mobile app, this would call a REST API first to get history
+            // then SignalR handles live updates.
+            using var client = new HttpClient();
+            var response = await client.GetFromJsonAsync<List<ChatRoomModel>>($"{AppSettings.ApiBaseUrl}/api/chat/rooms");
+            return response ?? new List<ChatRoomModel>();
+        }
+
+        public async Task<IEnumerable<ChatMessageModel>> GetMessagesAsync(int roomId)
+        {
+            using var client = new HttpClient();
+            var response = await client.GetFromJsonAsync<List<ChatMessageModel>>($"{AppSettings.ApiBaseUrl}/api/chat/rooms/{roomId}/messages");
+            return response ?? new List<ChatMessageModel>();
+        }
+
+        public async Task MarkAsReadAsync(int roomId)
+        {
+            using var client = new HttpClient();
+            await client.PostAsync($"{AppSettings.ApiBaseUrl}/api/chat/rooms/{roomId}/read", null);
         }
     }
 }
