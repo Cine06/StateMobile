@@ -1,4 +1,4 @@
-﻿namespace StateMobile
+namespace StateMobile
 {
     public partial class MainPage : ContentPage
     {

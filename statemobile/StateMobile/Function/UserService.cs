@@ -1,4 +1,4 @@
-﻿namespace MallManagement.Function
+namespace MallManagement.Function
 {
     public class UserService
     {

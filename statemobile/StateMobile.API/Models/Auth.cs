@@ -1,4 +1,4 @@
-﻿namespace StateMobile.API.Models
+namespace StateMobile.API.Models
 {
     public class LoginRequest
     {
